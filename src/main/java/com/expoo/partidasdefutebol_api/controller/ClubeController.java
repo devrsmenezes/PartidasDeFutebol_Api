@@ -27,5 +27,18 @@ public class ClubeController {
         Clube clubeAtualizado = clubeService.atualizarClube(id, clubeDTO);
         return ResponseEntity.ok(clubeAtualizado);
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> inativarClube(@PathVariable Long id) {
+        clubeService.inativarClube(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Clube> buscarClube(@PathVariable Long id) {
+        Clube clube = clubeService.buscarClube(id);
+        return ResponseEntity.ok(clube);
+    }
+
 }
 

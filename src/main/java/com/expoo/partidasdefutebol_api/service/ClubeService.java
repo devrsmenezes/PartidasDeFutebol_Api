@@ -63,4 +63,16 @@ public class ClubeService {
             throw new ConflictException("Já existe um clube com este nome neste estado");
         });
     }
+
+    public void inativarClube(Long id) {
+        Clube clube = clubeRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Clube não encontrado"));
+        clube.setAtivo(false);
+        clubeRepository.save(clube);
+    }
+    public Clube buscarClube(Long id) {
+        return clubeRepository.findById(id)
+                .orElseThrow(() -> new NotFoundException("Clube não encontrado"));
+    }
+
 }
