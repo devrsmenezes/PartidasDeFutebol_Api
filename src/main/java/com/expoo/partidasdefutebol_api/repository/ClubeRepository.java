@@ -1,11 +1,21 @@
 package com.expoo.partidasdefutebol_api.repository;
 
 import com.expoo.partidasdefutebol_api.model.Clube;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-
-import java.util.Optional;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface ClubeRepository extends JpaRepository<Clube, Long> {
-    Optional<Clube> findByNomeAndEstado(String nome, String estado);
+    @Query("SELECT c FROM Clube c WHERE " +
+            "(:nome IS NULL OR LOWER(c.nome) LIKE LOWER(CONCAT('%', :nome, '%'))) AND " +
+            "(:estado IS NULL OR LOWER(c.estado) = LOWER(:estado)) AND " +
+            "(:ativo IS NULL OR c.ativo = :ativo)")
+    Page<Clube> findByFiltros(
+            @Param("nome") String nome,
+            @Param("estado") String estado,
+            @Param("ativo") Boolean ativo,
+            Pageable pageable
+    );
 }
-

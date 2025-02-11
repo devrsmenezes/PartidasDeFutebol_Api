@@ -1,56 +1,81 @@
 package com.expoo.partidasdefutebol_api.controller;
 
 import com.expoo.partidasdefutebol_api.dto.ClubeDTO;
-import com.expoo.partidasdefutebol_api.model.Clube;
 import com.expoo.partidasdefutebol_api.service.ClubeService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/clubes")
 public class ClubeController {
 
-    @Autowired
-    private ClubeService clubeService;
+    private final ClubeService clubeService;
 
-    @ControllerAdvice
-    public class ManipuladorGlobalDeExcecoes extends ResponseEntityExceptionHandler {
-
+    public ClubeController(ClubeService clubeService) {
+        this.clubeService = clubeService;
     }
 
     @PostMapping
-    public ResponseEntity<Clube> criarClube(@Valid @RequestBody ClubeDTO clubeDTO) {
-        Clube novoClube = clubeService.criarClube(clubeDTO);
-        return new ResponseEntity<>(novoClube, HttpStatus.CREATED);
+    public ResponseEntity<String> criarClube(@Valid @RequestBody ClubeDTO clubeDTO) {
+        try {
+            clubeService.criarClube(clubeDTO);
+            return ResponseEntity.status(HttpStatus.CREATED).body("O clube foi criado com sucesso!");
+        } catch (Exception e) {
+            return tratarExcecao(e, HttpStatus.BAD_REQUEST, "Erro ao criar o clube.");
+        }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Clube> atualizarClube(@PathVariable Long id, @Valid @RequestBody ClubeDTO clubeDTO) {
-        Clube clubeAtualizado = clubeService.atualizarClube(id, clubeDTO);
-        return ResponseEntity.ok(clubeAtualizado);
+    public ResponseEntity<?> atualizarClube(@PathVariable Long id, @Valid @RequestBody ClubeDTO clubeDTO) {
+        try {
+            ClubeDTO clubeAtualizado = clubeService.atualizarClube(id, clubeDTO);
+            return ResponseEntity.ok(clubeAtualizado);
+        } catch (Exception e) {
+            return tratarExcecao(e, HttpStatus.BAD_REQUEST, "Erro ao atualizar o clube.");
+        }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> inativarClube(@PathVariable Long id) {
-        clubeService.inativarClube(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> inativarClube(@PathVariable Long id) {
+        try {
+            clubeService.inativarClube(id);
+            return ResponseEntity.noContent().build();
+        } catch (Exception e) {
+            return tratarExcecao(e, HttpStatus.BAD_REQUEST, "Erro ao inativar o clube.");
+        }
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Clube> buscarClube(@PathVariable Long id) {
-        Clube clube = clubeService.buscarClube(id);
-        return ResponseEntity.ok(clube);
+    public ResponseEntity<?> buscarClube(@PathVariable Long id) {
+        try {
+            ClubeDTO clubeDTO = clubeService.buscarClube(id);
+            return ResponseEntity.ok(clubeDTO);
+        } catch (Exception e) {
+            return tratarExcecao(e, HttpStatus.NOT_FOUND, "Clube não encontrado.");
+        }
     }
-    @GetMapping("listar/")
-    public ResponseEntity<List<ClubeDTO>> ListarClubes() {
-        List<ClubeDTO> listaClubes = this.clubeService.listarclubes() ;
-        return new ResponseEntity<>(listaClubes, HttpStatus.OK);
+
+    @GetMapping
+    public ResponseEntity<?> listarClubes(
+            @RequestParam(required = false) String nome,
+            @RequestParam(required = false) String estado,
+            @RequestParam(required = false) Boolean ativo,
+            Pageable pageable
+    ) {
+        try {
+            Page<ClubeDTO> clubes = clubeService.listarClubes(nome, estado, ativo, pageable);
+            return ResponseEntity.ok(clubes);
+        } catch (Exception e) {
+            return tratarExcecao(e, HttpStatus.BAD_REQUEST, "Erro ao listar os clubes.");
+        }
+    }
+
+    private ResponseEntity<String> tratarExcecao(Exception e, HttpStatus status, String mensagemPadrao) {
+        String mensagem = e instanceof IllegalArgumentException ? e.getMessage() : mensagemPadrao;
+        return ResponseEntity.status(status).body("Erro: " + mensagem);
     }
 }
-
