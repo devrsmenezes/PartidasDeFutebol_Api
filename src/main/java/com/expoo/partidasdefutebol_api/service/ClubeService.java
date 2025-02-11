@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -74,7 +75,6 @@ public class ClubeService {
         clube.setAtivo(clubedto.getAtivo());
 
         return clube;
-
     }
 
     private void validarEstado(String estado) {
@@ -99,6 +99,23 @@ public class ClubeService {
     public Clube buscarClube(Long id) {
         return clubeRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("Clube não encontrado"));
+    }
+    
+    public List<ClubeDTO> listarclubes() {
+        List<Clube> clubes = clubeRepository.findAll();
+        List<ClubeDTO> clubeDTOs = new ArrayList<>();
+        if (this.clubeRepository.findAll().toArray().length > 0) {
+            for(Clube clube : clubes) {
+                ClubeDTO clubeDTO = new ClubeDTO();
+                clubeDTO.setNome(clube.getNome());
+                clubeDTO.setEstado(clube.getEstado());
+                clubeDTO.setDataCriacao(clube.getDataCriacao());
+                clubeDTO.setAtivo(clube.isAtivo());
+                clubeDTOs.add(clubeDTO);
+            }
+        }
+        return clubeDTOs;
+
     }
 
 }

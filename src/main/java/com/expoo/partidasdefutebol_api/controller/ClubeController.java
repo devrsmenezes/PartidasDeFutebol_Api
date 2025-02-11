@@ -1,9 +1,6 @@
 package com.expoo.partidasdefutebol_api.controller;
 
 import com.expoo.partidasdefutebol_api.dto.ClubeDTO;
-import com.expoo.partidasdefutebol_api.exception.ConflictException;
-import com.expoo.partidasdefutebol_api.exception.EntradaInvalidaException;
-import com.expoo.partidasdefutebol_api.exception.NotFoundException;
 import com.expoo.partidasdefutebol_api.model.Clube;
 import com.expoo.partidasdefutebol_api.service.ClubeService;
 import jakarta.validation.Valid;
@@ -12,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/clubes")
@@ -23,22 +22,6 @@ public class ClubeController {
     @ControllerAdvice
     public class ManipuladorGlobalDeExcecoes extends ResponseEntityExceptionHandler {
 
-        @ExceptionHandler(EntradaInvalidaException.class)
-        public ResponseEntity<Object> tratarEntradaInvalidaException(EntradaInvalidaException ex) {
-            String mensagemErro = "Entrada inválida: " + ex.getMessage();
-            return new ResponseEntity<>(mensagemErro, HttpStatus.BAD_REQUEST);
-        }
-
-        @ExceptionHandler(ConflictException.class)
-        public ResponseEntity<Object> handleConflictException(ConflictException ex) {
-            String errorMessage = ex.getMessage();
-            return new ResponseEntity<>(errorMessage, HttpStatus.CONFLICT);
-        }
-
-        @ExceptionHandler(NotFoundException.class)
-        public ResponseEntity<Object> handleNotFoundException(NotFoundException ex) {
-            return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
-        }
     }
 
     @PostMapping
@@ -64,6 +47,10 @@ public class ClubeController {
         Clube clube = clubeService.buscarClube(id);
         return ResponseEntity.ok(clube);
     }
-
+    @GetMapping("listar/")
+    public ResponseEntity<List<ClubeDTO>> ListarClubes() {
+        List<ClubeDTO> listaClubes = this.clubeService.listarclubes() ;
+        return new ResponseEntity<>(listaClubes, HttpStatus.OK);
+    }
 }
 
