@@ -6,6 +6,8 @@ import com.expoo.partidasdefutebol_api.model.Partida;
 import com.expoo.partidasdefutebol_api.repository.ClubeRepository;
 import com.expoo.partidasdefutebol_api.repository.PartidaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -96,6 +98,30 @@ public class PartidaService {
 
         if (partidaRepository.existsByEstadioAndDataHora(partida.getEstadio(), partida.getDataHora())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Estádio já possui jogo marcado neste horário");
+        }
+    }
+
+    public void removerPartida(Long id) {
+        if (!partidaRepository.existsById(id)) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Partida não encontrada");
+        }
+        partidaRepository.deleteById(id);
+    }
+
+    public Partida buscarPartidaPorId(Long id) {
+        return partidaRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Partida não encontrada"));
+    }
+
+    public Page<Partida> listarPartidas(Long clubeId, String estadio, Pageable pageable) {
+        if (clubeId != null && estadio != null && !estadio.isEmpty()) {
+            return partidaRepository.findByClubeMandanteIdOrClubeVisitanteIdAndEstadioContainingIgnoreCase(clubeId, clubeId, estadio, pageable);
+        } else if (clubeId != null) {
+            return partidaRepository.findByClubeMandanteIdOrClubeVisitanteId(clubeId, clubeId, pageable);
+        } else if (estadio != null && !estadio.isEmpty()) {
+            return partidaRepository.findByEstadioContainingIgnoreCase(estadio, pageable);
+        } else {
+            return partidaRepository.findAll(pageable);
         }
     }
 }
