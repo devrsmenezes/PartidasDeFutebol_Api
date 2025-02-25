@@ -1,4 +1,7 @@
 package com.expoo.partidasdefutebol_api.repository;
 
-public class EstadioRepository {
+import com.expoo.partidasdefutebol_api.model.Estadio;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+public interface EstadioRepository extends JpaRepository<Estadio, Long> {
 }
