@@ -5,10 +5,12 @@ import com.expoo.partidasdefutebol_api.model.Partida;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Repository
 public interface PartidaRepository extends JpaRepository<Partida, Long> {
     List<Partida> findByClubeMandanteOrClubeVisitanteAndDataHoraBetween(
             Clube clube1, Clube clube2, LocalDateTime inicio, LocalDateTime fim);
