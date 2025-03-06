@@ -21,25 +21,25 @@ public class PartidaController {
 
     @PostMapping
     public ResponseEntity<Partida> cadastrarPartida(@Valid @RequestBody PartidaDTO partidaDTO) {
-        Partida novaPartida = partidaService.cadastrarPartida(partidaDTO);
+        Partida novaPartida = partidaService.cadastrar(partidaDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(novaPartida);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Partida> atualizarPartida(@PathVariable Long id, @Valid @RequestBody PartidaDTO partidaDTO) {
-        Partida partidaAtualizada = partidaService.atualizarPartida(id, partidaDTO);
+        Partida partidaAtualizada = partidaService.atualizar(id, partidaDTO);
         return ResponseEntity.ok(partidaAtualizada);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> removerPartida(@PathVariable Long id) {
-        partidaService.removerPartida(id);
+        partidaService.remover(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Partida> buscarPartida(@PathVariable Long id) {
-        Partida partida = partidaService.buscarPartidaPorId(id);
+        Partida partida = partidaService.buscar(id);
         return ResponseEntity.ok(partida);
     }
 
@@ -48,7 +48,7 @@ public class PartidaController {
             @RequestParam(required = false) Long clubeId,
             @RequestParam(required = false) String estadio,
             @PageableDefault(sort = "dataHora", direction = Sort.Direction.DESC) Pageable pageable) {
-        Page<Partida> partidas = partidaService.listarPartidas(clubeId, estadio, pageable);
+        Page<Partida> partidas = partidaService.listar(clubeId, estadio, pageable);
         return ResponseEntity.ok(partidas);
     }
 

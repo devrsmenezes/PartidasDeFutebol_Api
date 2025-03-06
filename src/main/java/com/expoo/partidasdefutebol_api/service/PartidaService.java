@@ -23,9 +23,9 @@ public class PartidaService {
     @Autowired
     private ClubeRepository clubeRepository;
 
-    public Partida cadastrarPartida(PartidaDTO partidaDTO) {
+    public Partida cadastrar(PartidaDTO partidaDTO) {
         Partida partida = converterParaPartida(partidaDTO);
-        validarPartida(partida);
+        validar(partida);
         return partidaRepository.save(partida);
     }
 
@@ -41,16 +41,16 @@ public class PartidaService {
         return partida;
 }
 
-    public Partida atualizarPartida(Long id, PartidaDTO partidaDTO) {
+    public Partida atualizar(Long id, PartidaDTO partidaDTO) {
         Partida partida = partidaRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Partida não encontrada"));
 
-        atualizarDadosPartida(partida, partidaDTO);
-        validarPartida(partida);
+        atualizar(partida, partidaDTO);
+        validar(partida);
         return partidaRepository.save(partida);
     }
 
-    private void atualizarDadosPartida(Partida partida, PartidaDTO dto) {
+    private void atualizar(Partida partida, PartidaDTO dto) {
         Clube clubeMandante = clubeRepository.findById(dto.getClubeMandanteId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Clube mandante não encontrado"));
         Clube clubeVisitante = clubeRepository.findById(dto.getClubeVisitanteId())
@@ -63,7 +63,7 @@ public class PartidaService {
         partida.setDataHora(dto.getDataHora());
     }
 
-    private void validarPartida(Partida partida) {
+    private void validar(Partida partida) {
         if (partida.getClubeMandante().equals(partida.getClubeVisitante())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Os clubes não podem ser iguais");
         }
@@ -101,19 +101,19 @@ public class PartidaService {
         }
     }
 
-    public void removerPartida(Long id) {
+    public void remover(Long id) {
         if (!partidaRepository.existsById(id)) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Partida não encontrada");
         }
         partidaRepository.deleteById(id);
     }
 
-    public Partida buscarPartidaPorId(Long id) {
+    public Partida buscar(Long id) {
         return partidaRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Partida não encontrada"));
     }
 
-    public Page<Partida> listarPartidas(Long clubeId, String estadio, Pageable pageable) {
+    public Page<Partida> listar(Long clubeId, String estadio, Pageable pageable) {
         if (clubeId != null && estadio != null && !estadio.isEmpty()) {
             return partidaRepository.findByClubeMandanteIdOrClubeVisitanteIdAndEstadioContainingIgnoreCase(clubeId, clubeId, estadio, pageable);
         } else if (clubeId != null) {

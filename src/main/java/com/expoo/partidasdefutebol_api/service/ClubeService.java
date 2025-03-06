@@ -16,12 +16,12 @@ public class ClubeService {
         this.clubeRepository = clubeRepository;
     }
 
-    public void criarClube(ClubeDTO clubeDTO) {
+    public void criar(ClubeDTO clubeDTO) {
         Clube novoClube = new Clube(clubeDTO);
         clubeRepository.save(novoClube);
     }
 
-    public ClubeDTO atualizarClube(Long id, ClubeDTO clubeDTO) {
+    public ClubeDTO atualizar(Long id, ClubeDTO clubeDTO) {
         Clube clube = clubeRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Clube não encontrado."));
 
@@ -34,7 +34,7 @@ public class ClubeService {
         return new ClubeDTO(atualizado);
     }
 
-    public void inativarClube(Long id) {
+    public void inativar(Long id) {
         Clube clube = clubeRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Clube não encontrado."));
 
@@ -42,14 +42,14 @@ public class ClubeService {
         clubeRepository.save(clube);
     }
 
-    public ClubeDTO buscarClube(Long id) {
+    public ClubeDTO buscar(Long id) {
         Clube clube = clubeRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Clube não encontrado."));
 
         return new ClubeDTO(clube);
     }
 
-    public Page<ClubeDTO> listarClubes(String nome, String estado, Boolean ativo, Pageable pageable) {
+    public Page<ClubeDTO> listar(String nome, String estado, Boolean ativo, Pageable pageable) {
         Page<Clube> clubes = clubeRepository.findByFiltros(nome, estado, ativo, pageable);
         return clubes.map(ClubeDTO::new);
     }

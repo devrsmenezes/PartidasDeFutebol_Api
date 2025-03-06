@@ -22,7 +22,7 @@ public class ClubeController {
     @PostMapping
     public ResponseEntity<String> criarClube(@Valid @RequestBody ClubeDTO clubeDTO) {
         try {
-            clubeService.criarClube(clubeDTO);
+            clubeService.criar(clubeDTO);
             return ResponseEntity.status(HttpStatus.CREATED).body("O clube foi criado com sucesso!");
         } catch (Exception e) {
             return tratarExcecao(e, HttpStatus.BAD_REQUEST, "Erro ao criar o clube.");
@@ -32,7 +32,7 @@ public class ClubeController {
     @PutMapping("/{id}")
     public ResponseEntity<?> atualizarClube(@PathVariable Long id, @Valid @RequestBody ClubeDTO clubeDTO) {
         try {
-            ClubeDTO clubeAtualizado = clubeService.atualizarClube(id, clubeDTO);
+            ClubeDTO clubeAtualizado = clubeService.atualizar(id, clubeDTO);
             return ResponseEntity.ok(clubeAtualizado);
         } catch (Exception e) {
             return tratarExcecao(e, HttpStatus.BAD_REQUEST, "Erro ao atualizar o clube.");
@@ -42,7 +42,7 @@ public class ClubeController {
     @DeleteMapping("/{id}")
     public ResponseEntity<?> inativarClube(@PathVariable Long id) {
         try {
-            clubeService.inativarClube(id);
+            clubeService.inativar(id);
             return ResponseEntity.noContent().build();
         } catch (Exception e) {
             return tratarExcecao(e, HttpStatus.BAD_REQUEST, "Erro ao inativar o clube.");
@@ -52,7 +52,7 @@ public class ClubeController {
     @GetMapping("/{id}")
     public ResponseEntity<?> buscarClube(@PathVariable Long id) {
         try {
-            ClubeDTO clubeDTO = clubeService.buscarClube(id);
+            ClubeDTO clubeDTO = clubeService.buscar(id);
             return ResponseEntity.ok(clubeDTO);
         } catch (Exception e) {
             return tratarExcecao(e, HttpStatus.NOT_FOUND, "Clube não encontrado.");
@@ -67,7 +67,7 @@ public class ClubeController {
             Pageable pageable
     ) {
         try {
-            Page<ClubeDTO> clubes = clubeService.listarClubes(nome, estado, ativo, pageable);
+            Page<ClubeDTO> clubes = clubeService.listar(nome, estado, ativo, pageable);
             return ResponseEntity.ok(clubes);
         } catch (Exception e) {
             return tratarExcecao(e, HttpStatus.BAD_REQUEST, "Erro ao listar os clubes.");

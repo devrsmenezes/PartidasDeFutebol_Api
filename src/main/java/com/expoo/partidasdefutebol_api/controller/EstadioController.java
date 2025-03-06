@@ -4,6 +4,8 @@ import com.expoo.partidasdefutebol_api.dto.EstadioDTO;
 import com.expoo.partidasdefutebol_api.model.Estadio;
 import com.expoo.partidasdefutebol_api.service.EstadioService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,22 +19,49 @@ public class EstadioController {
 
     @PostMapping
     public ResponseEntity<String> cadastrar(@RequestBody EstadioDTO estadioDTO) {
-        Estadio novoEstadio = estadioService.cadastrar(estadioDTO);
-        String mensagem = novoEstadio.getNome() + " foi cadastrado com sucesso.";
-        return new ResponseEntity<>(mensagem, HttpStatus.CREATED);
+        try {
+            Estadio novoEstadio = estadioService.cadastrar(estadioDTO);
+            String mensagem = novoEstadio.getNome() + " foi cadastrado com sucesso.";
+            return new ResponseEntity<>(mensagem, HttpStatus.CREATED);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<String> editar (@PathVariable Long id, @RequestBody EstadioDTO estadioDTO) {
-        Estadio estadioAtualizado = estadioService.editar(id, estadioDTO);
-        String mensagem = estadioAtualizado.getNome() + " Estádio atualizado com sucesso.";
-        return new ResponseEntity<>(mensagem, HttpStatus.OK);
+        try {
+            Estadio estadioAtualizado = estadioService.editar(id, estadioDTO);
+            String mensagem = estadioAtualizado.getNome() + " Estádio atualizado com sucesso.";
+            return new ResponseEntity<>(estadioAtualizado.getNome(), HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<EstadioDTO> buscar(@PathVariable Long id) {
-        EstadioDTO estadio = estadioService.buscar(id);
-        return ResponseEntity.ok(estadio);
+        try {
+            EstadioDTO estadio = estadioService.buscar(id);
+            return ResponseEntity.ok(estadio);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();}
     }
 
+    @GetMapping
+    public ResponseEntity<Page<EstadioDTO>> listar(
+            @RequestParam(defaultValue = "0") int pagina,
+            @RequestParam(defaultValue = "10") int tamanho,
+            @RequestParam(defaultValue = "nome") String ordenarPor,
+            @RequestParam(defaultValue = "asc") String direcao) {
+
+        Pageable pageable = null;
+        Page<EstadioDTO> estadio = estadioService.listar(pageable);
+
+        if (estadio.isEmpty()) {
+            return ResponseEntity.noContent().build();
+        }
+
+        return ResponseEntity.ok(estadio);
+    }
 }
