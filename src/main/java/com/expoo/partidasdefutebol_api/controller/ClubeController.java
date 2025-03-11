@@ -3,6 +3,7 @@ package com.expoo.partidasdefutebol_api.controller;
 import com.expoo.partidasdefutebol_api.dto.ClubeDTO;
 import com.expoo.partidasdefutebol_api.service.ClubeService;
 import jakarta.validation.Valid;
+import java.util.Optional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -20,7 +21,7 @@ public class ClubeController {
     }
 
     @PostMapping
-    public ResponseEntity<String> criarClube(@Valid @RequestBody ClubeDTO clubeDTO) {
+    public ResponseEntity<String> criar(@Valid @RequestBody ClubeDTO clubeDTO) {
         try {
             clubeService.criar(clubeDTO);
             return ResponseEntity.status(HttpStatus.CREATED).body("O clube foi criado com sucesso!");
@@ -30,7 +31,7 @@ public class ClubeController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> atualizarClube(@PathVariable Long id, @Valid @RequestBody ClubeDTO clubeDTO) {
+    public ResponseEntity<?> atualizar(@PathVariable Long id, @Valid @RequestBody ClubeDTO clubeDTO) {
         try {
             ClubeDTO clubeAtualizado = clubeService.atualizar(id, clubeDTO);
             return ResponseEntity.ok(clubeAtualizado);
@@ -40,7 +41,7 @@ public class ClubeController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> inativarClube(@PathVariable Long id) {
+    public ResponseEntity<?> inativar(@PathVariable Long id) {
         try {
             clubeService.inativar(id);
             return ResponseEntity.noContent().build();
@@ -50,7 +51,7 @@ public class ClubeController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> buscarClube(@PathVariable Long id) {
+    public ResponseEntity<?> buscar(@PathVariable Long id) {
         try {
             ClubeDTO clubeDTO = clubeService.buscar(id);
             return ResponseEntity.ok(clubeDTO);
@@ -60,7 +61,7 @@ public class ClubeController {
     }
 
     @GetMapping
-    public ResponseEntity<?> listarClubes(
+    public ResponseEntity<?> listar(
             @RequestParam(required = false) String nome,
             @RequestParam(required = false) String estado,
             @RequestParam(required = false) Boolean ativo,
@@ -78,4 +79,7 @@ public class ClubeController {
         String mensagem = e instanceof IllegalArgumentException ? e.getMessage() : mensagemPadrao;
         return ResponseEntity.status(status).body("Erro: " + mensagem);
     }
+
+   @GetMapping("/clubes/{id}/retro")
+
 }

@@ -52,5 +52,6 @@ public class ClubeService {
     public Page<ClubeDTO> listar(String nome, String estado, Boolean ativo, Pageable pageable) {
         Page<Clube> clubes = clubeRepository.findByFiltros(nome, estado, ativo, pageable);
         return clubes.map(ClubeDTO::new);
-    }
+    }  
+
 }
