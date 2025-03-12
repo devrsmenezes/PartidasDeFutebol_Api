@@ -13,11 +13,11 @@ public class Partida {
 
     @ManyToOne
     @NotNull(message = "Clube mandante é obrigatório")
-    private Clube clubeMandante;
+    private Clube mandante;
 
     @ManyToOne
     @NotNull(message = "Clube visitante é obrigatório")
-    private Clube clubeVisitante;
+    private Clube visitante;
 
     @NotNull(message = "Resultado é obrigatório")
     private String resultado;
@@ -28,17 +28,19 @@ public class Partida {
     @NotNull(message = "Data e hora são obrigatórias")
     @PastOrPresent(message = "Data e hora não podem estar no futuro")
     private LocalDateTime dataHora;
+    private int golsMandante;
+    private int golsVisitante;
 
     public Long getId() {
         return id;
     }
 
-    public Clube getClubeMandante() {
-        return clubeMandante;
+    public Clube getMandante() {
+        return mandante;
     }
 
-    public Clube getClubeVisitante() {
-        return clubeVisitante;
+    public Clube getVisitante() {
+        return visitante;
     }
 
     public String getResultado() {
@@ -57,12 +59,12 @@ public class Partida {
         this.id = id;
     }
 
-    public void setClubeMandante(Clube clubeMandante) {
-        this.clubeMandante = clubeMandante;
+    public void setMandante(Clube mandante) {
+        this.mandante = mandante;
     }
 
-    public void setClubeVisitante(Clube clubeVisitante) {
-        this.clubeVisitante = clubeVisitante;
+    public void setVisitante(Clube visitante) {
+        this.visitante = visitante;
     }
 
     public void setResultado(String resultado) {
@@ -76,4 +78,21 @@ public class Partida {
     public void setDataHora(LocalDateTime dataHora) {
         this.dataHora = dataHora;
     }
+    
+    public int getGolsMandante() {
+        return golsMandante;
+    }
+
+    public void setGolsMandante(int golsMandante) {
+        this.golsMandante = golsMandante;
+    }
+
+    public int getGolsVisitante() {
+        return golsVisitante;
+    }
+
+    public void setGolsVisitante(int golsVisitante) {
+        this.golsVisitante = golsVisitante;
+    }
+
 }

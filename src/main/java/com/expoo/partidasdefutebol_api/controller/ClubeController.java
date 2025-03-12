@@ -3,7 +3,7 @@ package com.expoo.partidasdefutebol_api.controller;
 import com.expoo.partidasdefutebol_api.dto.ClubeDTO;
 import com.expoo.partidasdefutebol_api.service.ClubeService;
 import jakarta.validation.Valid;
-import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -79,7 +79,4 @@ public class ClubeController {
         String mensagem = e instanceof IllegalArgumentException ? e.getMessage() : mensagemPadrao;
         return ResponseEntity.status(status).body("Erro: " + mensagem);
     }
-
-   @GetMapping("/clubes/{id}/retro")
-
 }

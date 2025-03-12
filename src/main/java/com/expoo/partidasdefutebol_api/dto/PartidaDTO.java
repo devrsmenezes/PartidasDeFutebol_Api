@@ -5,10 +5,10 @@ import java.time.LocalDateTime;
 
 public class PartidaDTO {
     @NotNull(message = "ID do clube mandante é obrigatório")
-    private Long clubeMandanteId;
+    private Long mandanteId;
 
     @NotNull(message = "ID do clube visitante é obrigatório")
-    private Long clubeVisitanteId;
+    private Long visitanteId;
 
     @NotNull(message = "Resultado é obrigatório")
     private String resultado;
@@ -20,12 +20,12 @@ public class PartidaDTO {
     private LocalDateTime dataHora;
     private Long id;
 
-    public Long getClubeMandanteId() {
-        return clubeMandanteId;
+    public Long getMandanteId() {
+        return mandanteId;
     }
 
-    public Long getClubeVisitanteId() {
-        return clubeVisitanteId;
+    public Long getVisitanteId() {
+        return visitanteId;
     }
 
     public String getResultado() {
@@ -48,12 +48,12 @@ public class PartidaDTO {
         this.id = id;
     }
 
-    public void setClubeMandanteId(Long clubeMandanteId) {
-        this.clubeMandanteId = clubeMandanteId;
+    public void setMandanteId(Long mandanteId) {
+        this.mandanteId = mandanteId;
     }
 
-    public void setClubeVisitanteId(Long clubeVisitanteId) {
-        this.clubeVisitanteId = clubeVisitanteId;
+    public void setVisitanteId(Long visitanteId) {
+        this.visitanteId = visitanteId;
     }
 
     public void setResultado(String resultado) {

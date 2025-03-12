@@ -1,28 +1,23 @@
 package com.expoo.partidasdefutebol_api.dto;
 
 public class RetroDTO {
-    private String nomeClube;
+    private String nome;
     private int vitorias;
     private int empates;
     private int derrotas;
     private int golsFeitos;
     private int golsSofridos;
 
-    public RetroDTO(String nomeClube, int vitorias, int empates, int derrotas, int golsFeitos, int golsSofridos) {
-        this.nomeClube = nomeClube;
-        this.vitorias = vitorias;
-        this.empates = empates;
-        this.derrotas = derrotas;
-        this.golsFeitos = golsFeitos;
-        this.golsSofridos = golsSofridos;
+    public RetroDTO(Long Id, String nome, int vitorias, int empates, int derrotas, int golsFeitos, int golsSofridos) {
+        this.nome = nome;
     }
 
-    public String getNomeClube() {
-        return nomeClube;
+    public String getNome() {
+        return nome;
     }
 
-    public void setNomeClube(String nomeClube) {
-        this.nomeClube = nomeClube;
+    public void setNome(String nome) {
+        this.nome = nome;
     }
 
     public int getVitorias() {
@@ -63,5 +58,9 @@ public class RetroDTO {
 
     public void setGolsSofridos(int golsSofridos) {
         this.golsSofridos = golsSofridos;
+    }
+
+    public void setId(Long id) {
+        this.setId(id);
     }
 }

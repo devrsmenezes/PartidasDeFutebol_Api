@@ -3,6 +3,9 @@ package com.expoo.partidasdefutebol_api.service;
 import com.expoo.partidasdefutebol_api.dto.ClubeDTO;
 import com.expoo.partidasdefutebol_api.model.Clube;
 import com.expoo.partidasdefutebol_api.repository.ClubeRepository;
+
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -52,6 +55,5 @@ public class ClubeService {
     public Page<ClubeDTO> listar(String nome, String estado, Boolean ativo, Pageable pageable) {
         Page<Clube> clubes = clubeRepository.findByFiltros(nome, estado, ativo, pageable);
         return clubes.map(ClubeDTO::new);
-    }  
-
+    }
 }

@@ -12,14 +12,16 @@ import java.util.List;
 
 @Repository
 public interface PartidaRepository extends JpaRepository<Partida, Long> {
-    List<Partida> findByClubeMandanteOrClubeVisitanteAndDataHoraBetween(
+    List<Partida> findByMandanteOrVisitanteAndDataHoraBetween(
             Clube clube1, Clube clube2, LocalDateTime inicio, LocalDateTime fim);
 
     boolean existsByEstadioAndDataHora(String estadio, LocalDateTime dataHora);
 
-    Page<Partida> findByClubeMandanteIdOrClubeVisitanteId(Long clubeId, Long clubeId2, Pageable pageable);
+    Page<Partida> findByMandanteIdOrVisitanteId(Long clubeId, Long clubeId2, Pageable pageable);
     Page<Partida> findByEstadioContainingIgnoreCase(String estadio, Pageable pageable);
-    Page<Partida> findByClubeMandanteIdOrClubeVisitanteIdAndEstadioContainingIgnoreCase(Long clubeId, Long clubeId2, String estadio, Pageable pageable);
+    Page<Partida> findByMandanteIdOrVisitanteIdAndEstadioContainingIgnoreCase(Long clubeId, Long clubeId2, String estadio, Pageable pageable);
+
+    List<Partida> findByMandanteIdOrVisitanteId(Long mandanteId, Long visitanteId);
 }
 
 

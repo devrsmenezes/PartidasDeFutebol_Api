@@ -4,12 +4,13 @@ import com.expoo.partidasdefutebol_api.model.Clube;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 @Repository
-public interface ClubeRepository extends JpaRepository<Clube, Long> {
+public interface ClubeRepository extends JpaRepository<Clube, Long>, JpaSpecificationExecutor<Clube> {
     @Query("SELECT c FROM Clube c WHERE " +
             "(:nome IS NULL OR LOWER(c.nome) LIKE LOWER(CONCAT('%', :nome, '%'))) AND " +
             "(:estado IS NULL OR LOWER(c.estado) = LOWER(:estado)) AND " +
