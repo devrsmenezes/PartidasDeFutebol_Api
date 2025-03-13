@@ -31,9 +31,9 @@ public class PartidaService {
 
     private Partida converterParaPartida(PartidaDTO dto) {
         Partida partida = new Partida();
-        partida.setClubeMandante(clubeRepository.findById(dto.getClubeMandanteId())
+        partida.setMandante(clubeRepository.findById(dto.getMandanteId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Clube mandante não encontrado")));
-        partida.setClubeVisitante(clubeRepository.findById(dto.getClubeVisitanteId())
+        partida.setVisitante(clubeRepository.findById(dto.getVisitanteId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Clube visitante não encontrado")));
         partida.setResultado(dto.getResultado());
         partida.setEstadio(dto.getEstadio());
@@ -51,20 +51,20 @@ public class PartidaService {
     }
 
     private void atualizar(Partida partida, PartidaDTO dto) {
-        Clube clubeMandante = clubeRepository.findById(dto.getClubeMandanteId())
+        Clube mandante = clubeRepository.findById(dto.getMandanteId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Clube mandante não encontrado"));
-        Clube clubeVisitante = clubeRepository.findById(dto.getClubeVisitanteId())
+        Clube visitante = clubeRepository.findById(dto.getVisitanteId())
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Clube visitante não encontrado"));
 
-        partida.setClubeMandante(clubeMandante);
-        partida.setClubeVisitante(clubeVisitante);
+        partida.setMandante(mandante);
+        partida.setVisitante(visitante);
         partida.setResultado(dto.getResultado());
         partida.setEstadio(dto.getEstadio());
         partida.setDataHora(dto.getDataHora());
     }
 
     private void validar(Partida partida) {
-        if (partida.getClubeMandante().equals(partida.getClubeVisitante())) {
+        if (partida.getMandante().equals(partida.getVisitante())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Os clubes não podem ser iguais");
         }
 
@@ -79,19 +79,19 @@ public class PartidaService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Data e hora não podem estar no futuro");
         }
 
-        if (partida.getDataHora().isBefore(partida.getClubeMandante().getDataCriacao().atStartOfDay()) ||
-                partida.getDataHora().isBefore(partida.getClubeVisitante().getDataCriacao().atStartOfDay())) {
+        if (partida.getDataHora().isBefore(partida.getMandante().getDataCriacao().atStartOfDay()) ||
+                partida.getDataHora().isBefore(partida.getVisitante().getDataCriacao().atStartOfDay())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Data da partida é anterior à criação de um dos clubes");
         }
 
-        if (!partida.getClubeMandante().isAtivo() || !partida.getClubeVisitante().isAtivo()) {
+        if (!partida.getMandante().isAtivo() || !partida.getVisitante().isAtivo()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Um dos clubes está inativo");
         }
 
         LocalDateTime inicio = partida.getDataHora().minusHours(48);
         LocalDateTime fim = partida.getDataHora().plusHours(48);
-        List<Partida> partidasProximas = partidaRepository.findByClubeMandanteOrClubeVisitanteAndDataHoraBetween(
-                partida.getClubeMandante(), partida.getClubeVisitante(), inicio, fim);
+        List<Partida> partidasProximas = partidaRepository.findByMandanteOrVisitanteAndDataHoraBetween(
+                partida.getMandante(), partida.getVisitante(), inicio, fim);
         if (!partidasProximas.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Um dos clubes já possui partida marcada em horário próximo");
         }
@@ -115,9 +115,9 @@ public class PartidaService {
 
     public Page<Partida> listar(Long clubeId, String estadio, Pageable pageable) {
         if (clubeId != null && estadio != null && !estadio.isEmpty()) {
-            return partidaRepository.findByClubeMandanteIdOrClubeVisitanteIdAndEstadioContainingIgnoreCase(clubeId, clubeId, estadio, pageable);
+            return partidaRepository.findByMandanteIdOrVisitanteIdAndEstadioContainingIgnoreCase(clubeId, clubeId, estadio, pageable);
         } else if (clubeId != null) {
-            return partidaRepository.findByClubeMandanteIdOrClubeVisitanteId(clubeId, clubeId, pageable);
+            return partidaRepository.findByMandanteIdOrVisitanteId(clubeId, clubeId, pageable);
         } else if (estadio != null && !estadio.isEmpty()) {
             return partidaRepository.findByEstadioContainingIgnoreCase(estadio, pageable);
         } else {
