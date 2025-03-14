@@ -26,15 +26,24 @@ public class ClubeDTO {
 
     private boolean ativo;
 
-    public ClubeDTO() {
+    public Clube toEntity() {
+        Clube clube = new Clube();
+        clube.setId(this.id);
+        clube.setNome(this.nome);
+        clube.setEstado(this.estado);
+        clube.setDataCriacao(this.dataCriacao);
+        clube.setAtivo(this.ativo);
+        return clube;
     }
 
-    public ClubeDTO(Clube clube) {
-        this.id = clube.getId();
-        this.nome = clube.getNome();
-        this.estado = clube.getEstado();
-        this.dataCriacao = clube.getDataCriacao();
-        this.ativo = clube.isAtivo();
+    public static ClubeDTO fromEntity(Clube clube) {
+        ClubeDTO dto = new ClubeDTO();
+        dto.setId(clube.getId());
+        dto.setNome(clube.getNome());
+        dto.setEstado(clube.getEstado());
+        dto.setDataCriacao(clube.getDataCriacao());
+        dto.setAtivo(clube.isAtivo());
+        return dto;
     }
 
     public Long getId() {

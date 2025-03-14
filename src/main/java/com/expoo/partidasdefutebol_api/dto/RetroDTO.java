@@ -8,8 +8,13 @@ public class RetroDTO {
     private int golsFeitos;
     private int golsSofridos;
 
-    public RetroDTO(Long Id, String nome, int vitorias, int empates, int derrotas, int golsFeitos, int golsSofridos) {
+    public RetroDTO(String nome, int vitorias, int empates, int derrotas, int golsFeitos, int golsSofridos) {
         this.nome = nome;
+        this.vitorias = vitorias;
+        this.empates = empates;
+        this.derrotas = derrotas;
+        this.golsFeitos = golsFeitos;
+        this.golsSofridos = golsSofridos;
     }
 
     public String getNome() {
@@ -58,9 +63,5 @@ public class RetroDTO {
 
     public void setGolsSofridos(int golsSofridos) {
         this.golsSofridos = golsSofridos;
-    }
-
-    public void setId(Long id) {
-        this.setId(id);
     }
 }

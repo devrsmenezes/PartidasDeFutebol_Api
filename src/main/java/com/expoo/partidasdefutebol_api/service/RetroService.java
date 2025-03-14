@@ -21,14 +21,13 @@ public class RetroService {
     private PartidaRepository partidaRepository;
 
     public RetroDTO getRetro(Long clubeId) {
+  
         Clube clube = clubeRepository.findById(clubeId)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Clube não encontrado"));
 
         List<Partida> partidas = partidaRepository.findByMandanteIdOrVisitanteId(clubeId, clubeId);
 
-        RetroDTO retro = new RetroDTO(clubeId, null, 0, 0, 0, 0, 0);
-        retro.setId(clubeId);
-        retro.setNome(clube.getNome());
+        RetroDTO retro = new RetroDTO(clube.getNome(), 0, 0, 0, 0, 0);
 
         for (Partida partida : partidas) {
             if (partida.getMandante().getId().equals(clubeId)) {

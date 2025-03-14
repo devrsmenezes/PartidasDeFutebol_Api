@@ -21,7 +21,7 @@ public interface PartidaRepository extends JpaRepository<Partida, Long> {
     Page<Partida> findByEstadioContainingIgnoreCase(String estadio, Pageable pageable);
     Page<Partida> findByMandanteIdOrVisitanteIdAndEstadioContainingIgnoreCase(Long clubeId, Long clubeId2, String estadio, Pageable pageable);
 
-    List<Partida> findByMandanteIdOrVisitanteId(Long mandanteId, Long visitanteId);
+    List<Partida> findByMandanteIdOrVisitanteId(Long clubeId, Long clubeId2);
 }
 
 

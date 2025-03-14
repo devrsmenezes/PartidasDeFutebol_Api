@@ -14,7 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/partidas")
+@RequestMapping("/partidas")
 public class PartidaController {
     @Autowired
     private PartidaService partidaService;

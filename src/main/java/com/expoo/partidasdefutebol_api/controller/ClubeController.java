@@ -1,20 +1,26 @@
 package com.expoo.partidasdefutebol_api.controller;
 
 import com.expoo.partidasdefutebol_api.dto.ClubeDTO;
+import com.expoo.partidasdefutebol_api.dto.RetroDTO;
 import com.expoo.partidasdefutebol_api.service.ClubeService;
+import com.expoo.partidasdefutebol_api.service.RetroService;
 import jakarta.validation.Valid;
-
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/clubes")
 public class ClubeController {
 
     private final ClubeService clubeService;
+
+    @Autowired
+    private RetroService retroService;
 
     public ClubeController(ClubeService clubeService) {
         this.clubeService = clubeService;
@@ -72,6 +78,16 @@ public class ClubeController {
             return ResponseEntity.ok(clubes);
         } catch (Exception e) {
             return tratarExcecao(e, HttpStatus.BAD_REQUEST, "Erro ao listar os clubes.");
+        }
+    }
+
+    @GetMapping("/{clubeId}/retro")
+    public ResponseEntity<RetroDTO> getRetro(@PathVariable Long clubeId) {
+        try {
+            RetroDTO retro = retroService.getRetro(clubeId);
+            return ResponseEntity.ok(retro);
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(null);
         }
     }
 
