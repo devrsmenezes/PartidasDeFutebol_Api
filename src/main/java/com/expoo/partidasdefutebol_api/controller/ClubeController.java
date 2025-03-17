@@ -4,6 +4,7 @@ import com.expoo.partidasdefutebol_api.dto.ClubeDTO;
 import com.expoo.partidasdefutebol_api.dto.RetroDTO;
 import com.expoo.partidasdefutebol_api.service.ClubeService;
 import jakarta.validation.Valid;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -67,8 +68,8 @@ public class ClubeController {
             @RequestParam(required = false) String nome,
             @RequestParam(required = false) String estado,
             @RequestParam(required = false) Boolean ativo,
-            Pageable pageable
-    ) {
+            Pageable pageable) 
+    {
         try {
             Page<ClubeDTO> clubes = clubeService.listar(nome, estado, ativo, pageable);
             return ResponseEntity.ok(clubes);
@@ -85,7 +86,7 @@ public class ClubeController {
             } catch (ResponseStatusException e) {
                 return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
             } catch (Exception e) {
-                return tratarExcecao(e, HttpStatus.INTERNAL_SERVER_ERROR, "Erro ao processar a solicitação.");
+                return tratarExcecao(e, HttpStatus.BAD_REQUEST, "Erro ao processar a solicitação.");
             }
         }
     
@@ -93,4 +94,18 @@ public class ClubeController {
             String mensagem = e instanceof IllegalArgumentException ? e.getMessage() : mensagemPadrao;
             return ResponseEntity.status(status).body("Erro: " + mensagem);
         }
+
+        @GetMapping("/{clubeId}/retro-adversarios")
+        public ResponseEntity<?> getRetroAdversarios(@PathVariable Long clubeId) {
+            try {
+                List<RetroDTO> retro = clubeService.getRetroAdversarios(clubeId);
+                return ResponseEntity.ok(retro);
+            } catch (ResponseStatusException e) {
+                return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
+            } catch (Exception e) {
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                                     .body("Erro interno do servidor. Por favor, tente novamente mais tarde.");
+            }
+        }
+
  }

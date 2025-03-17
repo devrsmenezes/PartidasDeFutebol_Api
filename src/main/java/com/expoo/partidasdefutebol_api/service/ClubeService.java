@@ -7,6 +7,8 @@ import com.expoo.partidasdefutebol_api.model.Partida;
 import com.expoo.partidasdefutebol_api.repository.ClubeRepository;
 import com.expoo.partidasdefutebol_api.repository.PartidaRepository;
 import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,87 +20,89 @@ import org.springframework.web.server.ResponseStatusException;
 public class ClubeService {
 
     private final ClubeRepository clubeRepository;
+    private final PartidaRepository partidaRepository;
 
     @Autowired
-    private PartidaRepository partidaRepository;
-
-    @Autowired
-    public ClubeService(ClubeRepository clubeRepository) {
+    public ClubeService(ClubeRepository clubeRepository, PartidaRepository partidaRepository) {
         this.clubeRepository = clubeRepository;
+        this.partidaRepository = partidaRepository;
     }
 
     public void criar(ClubeDTO clubeDTO) {
-        Clube novoClube = clubeDTO.toEntity(); 
+        Clube novoClube = clubeDTO.toEntity();
         clubeRepository.save(novoClube);
     }
 
     public ClubeDTO atualizar(Long id, ClubeDTO clubeDTO) {
-    
-        Clube clube = clubeRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Clube não encontrado."));
-
-        clube.setNome(clubeDTO.getNome());
-        clube.setEstado(clubeDTO.getEstado());
-        clube.setAtivo(clubeDTO.isAtivo());
-
+        Clube clube = buscarClubePorId(id);
+        atualizarClubeComDTO(clube, clubeDTO);
         Clube atualizado = clubeRepository.save(clube);
-
         return ClubeDTO.fromEntity(atualizado);
     }
 
     public void inativar(Long id) {
-
-        Clube clube = clubeRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Clube não encontrado."));
-
+        Clube clube = buscarClubePorId(id);
         clube.setAtivo(false);
         clubeRepository.save(clube);
     }
 
     public ClubeDTO buscar(Long id) {
-
-        Clube clube = clubeRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Clube não encontrado."));
-
-        return ClubeDTO.fromEntity(clube);
+        return ClubeDTO.fromEntity(buscarClubePorId(id));
     }
 
     public Page<ClubeDTO> listar(String nome, String estado, Boolean ativo, Pageable pageable) {
-        Page<Clube> clubes = clubeRepository.findByFiltros(nome, estado, ativo, pageable);
-
-        return clubes.map(ClubeDTO::fromEntity);
+        return clubeRepository.findByFiltros(nome, estado, ativo, pageable).map(ClubeDTO::fromEntity);
     }
 
     public RetroDTO getRetro(Long clubeId) {
-  
-        Clube clube = clubeRepository.findById(clubeId)
+        Clube clube = buscarClubePorId(clubeId);
+        List<Partida> partidas = buscarPartidasDoClube(clubeId);
+        return calcularRetro(clube, partidas);
+    }
+
+    public List<RetroDTO> getRetroAdversarios(Long clubeId) {
+        buscarClubePorId(clubeId); // Verifica se o clube existe
+        List<Partida> partidas = buscarPartidasDoClube(clubeId);
+        return calcularRetroAdversarios(clubeId, partidas);
+    }
+
+    private Clube buscarClubePorId(Long id) {
+        return clubeRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Clube não encontrado"));
+    }
 
-        List<Partida> partidas = partidaRepository.findByMandanteIdOrVisitanteId(clubeId, clubeId);
+    private void atualizarClubeComDTO(Clube clube, ClubeDTO clubeDTO) {
+        clube.setNome(clubeDTO.getNome());
+        clube.setEstado(clubeDTO.getEstado());
+        clube.setAtivo(clubeDTO.isAtivo());
+    }
 
+    private List<Partida> buscarPartidasDoClube(Long clubeId) {
+        return partidaRepository.findByMandanteIdOrVisitanteId(clubeId, clubeId);
+    }
+
+    private RetroDTO calcularRetro(Clube clube, List<Partida> partidas) {
         RetroDTO retro = new RetroDTO(clube.getNome(), 0, 0, 0, 0, 0);
-
-        for (Partida partida : partidas) {
-            if (partida.getMandante().getId().equals(clubeId)) {
-                atualizarRetroMandante(retro, partida);
-            } else {
-                atualizarRetroVisitante(retro, partida);
-            }
-        }
-
+        partidas.forEach(partida -> atualizarRetro(retro, partida, clube.getId()));
         return retro;
     }
 
-    private void atualizarRetroMandante(RetroDTO retro, Partida partida) {
-        retro.setGolsFeitos(retro.getGolsFeitos() + partida.getGolsMandante());
-        retro.setGolsSofridos(retro.getGolsSofridos() + partida.getGolsVisitante());
-        atualizarResultado(retro, partida.getGolsMandante(), partida.getGolsVisitante());
+    private List<RetroDTO> calcularRetroAdversarios(Long clubeId, List<Partida> partidas) {
+        return partidas.stream()
+                .collect(Collectors.groupingBy(partida -> getAdversarioId(partida, clubeId)))
+                .entrySet().stream()
+                .map(entry -> criarRetroDTO(entry.getKey(), entry.getValue(), clubeId))
+                .collect(Collectors.toList());
     }
 
-    private void atualizarRetroVisitante(RetroDTO retro, Partida partida) {
-        retro.setGolsFeitos(retro.getGolsFeitos() + partida.getGolsVisitante());
-        retro.setGolsSofridos(retro.getGolsSofridos() + partida.getGolsMandante());
-        atualizarResultado(retro, partida.getGolsVisitante(), partida.getGolsMandante());
+    private void atualizarRetro(RetroDTO retro, Partida partida, Long clubeId) {
+        boolean isMandante = partida.getMandante().getId().equals(clubeId);
+        int golsClube = isMandante ? partida.getGolsMandante() : partida.getGolsVisitante();
+        int golsAdversario = isMandante ? partida.getGolsVisitante() : partida.getGolsMandante();
+
+        retro.setGolsFeitos(retro.getGolsFeitos() + golsClube);
+        retro.setGolsSofridos(retro.getGolsSofridos() + golsAdversario);
+        atualizarResultado(retro, golsClube, golsAdversario);
     }
 
     private void atualizarResultado(RetroDTO retro, int golsClube, int golsAdversario) {
@@ -109,5 +113,21 @@ public class ClubeService {
         } else {
             retro.setEmpates(retro.getEmpates() + 1);
         }
+    }
+
+    private Long getAdversarioId(Partida partida, Long clubeId) {
+        return partida.getMandante().getId().equals(clubeId) 
+            ? partida.getVisitante().getId() 
+            : partida.getMandante().getId();
+    }
+
+    private RetroDTO criarRetroDTO(Long adversarioId, List<Partida> partidas, Long clubeId) {
+        String nomeAdversario = partidas.get(0).getMandante().getId().equals(clubeId) 
+            ? partidas.get(0).getVisitante().getNome() 
+            : partidas.get(0).getMandante().getNome();
+
+        RetroDTO retro = new RetroDTO(nomeAdversario, 0, 0, 0, 0, 0);
+        partidas.forEach(partida -> atualizarRetro(retro, partida, clubeId));
+        return retro;
     }
 }
