@@ -52,6 +52,4 @@ public class PartidaController {
         return ResponseEntity.ok(partidas);
     }
 
-
-
 }

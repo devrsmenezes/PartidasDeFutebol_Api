@@ -73,39 +73,36 @@ public class ClubeController {
         try {
             Page<ClubeDTO> clubes = clubeService.listar(nome, estado, ativo, pageable);
             return ResponseEntity.ok(clubes);
-        } catch (Exception e) {
+             } catch (Exception e) {
             return tratarExcecao(e, HttpStatus.BAD_REQUEST, "Erro ao listar os clubes.");
+          }
+   }
+    
+    @GetMapping("/{clubeId}/retro")
+    public ResponseEntity<?> getRetro(@PathVariable Long clubeId) {
+        try {
+            RetroDTO retro = clubeService.getRetro(clubeId);
+            return ResponseEntity.ok(retro);
+         } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
+         } catch (Exception e) {
+            return tratarExcecao(e, HttpStatus.BAD_REQUEST, "Erro ao processar a solicitação.");
         }
     }
     
-        @GetMapping("/{clubeId}/retro")
-        public ResponseEntity<?> getRetro(@PathVariable Long clubeId) {
-            try {
-                RetroDTO retro = clubeService.getRetro(clubeId);
-                return ResponseEntity.ok(retro);
-            } catch (ResponseStatusException e) {
-                return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
-            } catch (Exception e) {
-                return tratarExcecao(e, HttpStatus.BAD_REQUEST, "Erro ao processar a solicitação.");
-            }
-        }
-    
-        private ResponseEntity<String> tratarExcecao(Exception e, HttpStatus status, String mensagemPadrao) {
-            String mensagem = e instanceof IllegalArgumentException ? e.getMessage() : mensagemPadrao;
-            return ResponseEntity.status(status).body("Erro: " + mensagem);
-        }
+    private ResponseEntity<String> tratarExcecao(Exception e, HttpStatus status, String mensagemPadrao) {
+        String mensagem = e instanceof IllegalArgumentException ? e.getMessage() : mensagemPadrao;
+        return ResponseEntity.status(status).body("Erro: " + mensagem);
+    }
 
-        @GetMapping("/{clubeId}/retro-adversarios")
-        public ResponseEntity<?> getRetroAdversarios(@PathVariable Long clubeId) {
-            try {
-                List<RetroDTO> retro = clubeService.getRetroAdversarios(clubeId);
-                return ResponseEntity.ok(retro);
-            } catch (ResponseStatusException e) {
-                return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
-            } catch (Exception e) {
-                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                                     .body("Erro interno do servidor. Por favor, tente novamente mais tarde.");
-            }
+    @GetMapping("/{clubeId}/retro-adversarios")
+    public ResponseEntity<?> getRetroAdversarios(@PathVariable Long clubeId) {
+        try {
+            List<RetroDTO> retro = clubeService.getRetroAdversarios(clubeId);
+            return ResponseEntity.ok(retro);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body("Erro ao processar a solicitação.");
         }
-
+    }
  }

@@ -6,7 +6,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -22,6 +21,8 @@ public interface PartidaRepository extends JpaRepository<Partida, Long> {
     Page<Partida> findByMandanteIdOrVisitanteIdAndEstadioContainingIgnoreCase(Long clubeId, Long clubeId2, String estadio, Pageable pageable);
 
     List<Partida> findByMandanteIdOrVisitanteId(Long clubeId, Long clubeId2);
+
+    List<Partida> findByMandanteIdInOrVisitanteIdIn(List<Long> clubeId, List<Long> clubeId2);
 }
 
 
