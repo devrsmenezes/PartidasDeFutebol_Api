@@ -56,17 +56,24 @@ public class PartidaService {
 
     @Transactional(readOnly = true)
     public Page<Partida> listar(Long clubeId, String estadio, Pageable pageable) {
+        Page<Partida> partidas;
         if (clubeId != null && estadio != null && !estadio.isEmpty()) {
-            return partidaRepository.findByMandanteIdOrVisitanteIdAndEstadioContainingIgnoreCase(clubeId, clubeId, estadio, pageable);
+            partidas = partidaRepository.findByMandanteIdOrVisitanteIdAndEstadioContainingIgnoreCase(clubeId, clubeId, estadio, pageable);
         } else if (clubeId != null) {
-            return partidaRepository.findByMandanteIdOrVisitanteId(clubeId, clubeId, pageable);
+            partidas = partidaRepository.findByMandanteIdOrVisitanteId(clubeId, clubeId, pageable);
         } else if (estadio != null && !estadio.isEmpty()) {
-            return partidaRepository.findByEstadioContainingIgnoreCase(estadio, pageable);
+            partidas = partidaRepository.findByEstadioContainingIgnoreCase(estadio, pageable);
         } else {
-            return partidaRepository.findAll(pageable);
+            partidas = partidaRepository.findAll(pageable);
         }
+        
+        if (partidas.isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Não há lista de partidas");
+        }
+        
+        return partidas;
     }
-
+    
     private Partida converterParaPartida(PartidaDTO dto) {
         Partida partida = new Partida();
         partida.setMandante(buscarClubePorId(dto.getMandanteId(), "Clube mandante não encontrado"));

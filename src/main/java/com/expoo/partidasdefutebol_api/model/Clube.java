@@ -1,40 +1,47 @@
 package com.expoo.partidasdefutebol_api.model;
 
 import com.expoo.partidasdefutebol_api.dto.ClubeDTO;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import java.time.LocalDate;
 
 @Entity
+@Schema(description = "Entidade que representa um clube de futebol")
 public class Clube {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Schema(description = "ID único do clube", example = "1")
     private Long id;
 
     @NotBlank(message = "O nome do clube não pode estar vazio")
     @Size(min = 2, message = "O nome deve ter pelo menos 2 caracteres")
     @Column(nullable = false)
+    @Schema(description = "Nome do clube", example = "Flamengo", required = true)
     private String nome;
 
     @NotBlank(message = "A sigla do estado não pode estar vazia")
     @Size(min = 2, max = 2, message = "A sigla do estado deve ter exatamente 2 caracteres")
     @Column(nullable = false, length = 2)
+    @Schema(description = "Sigla do estado do clube", example = "RJ", required = true)
     private String estado;
 
     @NotNull(message = "A data de criação não pode ser nula")
     @PastOrPresent(message = "A data de criação deve ser uma data passada ou presente")
     @Column(nullable = false)
+    @Schema(description = "Data de criação do clube", example = "1895-11-15", required = true)
     private LocalDate dataCriacao;
 
-    @NotNull(message = "O status 'ativo' não pode ser nulo")
     @Column(nullable = false)
-    private Boolean ativo;
+    @Schema(description = "Indica se o clube está ativo", example = "true", required = true)
+    private boolean ativo;
 
     public Clube() {
     }
 
     public Clube(ClubeDTO clubeDTO) {
+        this.id = clubeDTO.getId();
         this.nome = clubeDTO.getNome();
         this.estado = clubeDTO.getEstado();
         this.dataCriacao = clubeDTO.getDataCriacao();
@@ -73,15 +80,11 @@ public class Clube {
         this.dataCriacao = dataCriacao;
     }
 
-    public Boolean getAtivo() {
+    public boolean isAtivo() {
         return ativo;
     }
 
-    public void setAtivo(Boolean ativo) {
+    public void setAtivo(boolean ativo) {
         this.ativo = ativo;
-    }
-
-    public boolean isAtivo() {
-        return Boolean.TRUE.equals(ativo);
     }
 }

@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface ClubeRepository extends JpaRepository<Clube, Long>, JpaSpecificationExecutor<Clube> {
+
     @Query("SELECT c FROM Clube c WHERE " +
             "(:nome IS NULL OR LOWER(c.nome) LIKE LOWER(CONCAT('%', :nome, '%'))) AND " +
             "(:estado IS NULL OR LOWER(c.estado) = LOWER(:estado)) AND " +
