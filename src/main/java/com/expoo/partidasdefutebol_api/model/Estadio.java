@@ -2,6 +2,7 @@ package com.expoo.partidasdefutebol_api.model;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
+import java.util.Objects;
 
 @Entity
 @Table(name = "estadios")
@@ -17,7 +18,8 @@ public class Estadio {
     @Schema(description = "Nome do estádio", example = "Maracanã", required = true)
     private String nome;
 
-    public Estadio() {
+    protected Estadio() {
+
     }
 
     public Estadio(String nome) {
@@ -29,18 +31,33 @@ public class Estadio {
         return id;
     }
 
-    @Schema(description = "Define o ID do estádio")
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     @Schema(description = "Obtém o nome do estádio")
     public String getNome() {
         return nome;
     }
 
-    @Schema(description = "Define o nome do estádio")
     public void setNome(String nome) {
         this.nome = nome;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Estadio estadio = (Estadio) o;
+        return Objects.equals(id, estadio.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return "Estadio{" +
+                "id=" + id +
+                ", nome='" + nome + '\'' +
+                '}';
     }
 }

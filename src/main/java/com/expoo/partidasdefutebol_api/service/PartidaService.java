@@ -75,23 +75,17 @@ public class PartidaService {
     }
     
     private Partida converterParaPartida(PartidaDTO dto) {
-        Partida partida = new Partida();
-        partida.setMandante(buscarClubePorId(dto.getMandanteId(), "Clube mandante não encontrado"));
-        partida.setVisitante(buscarClubePorId(dto.getVisitanteId(), "Clube visitante não encontrado"));
-        partida.setResultado(dto.getResultado());
-        partida.setEstadio(dto.getEstadio());
-        partida.setDataHora(dto.getDataHora());
-        return partida;
+        Clube mandante = buscarClubePorId(dto.getMandanteId(), "Clube mandante não encontrado");
+        Clube visitante = buscarClubePorId(dto.getVisitanteId(), "Clube visitante não encontrado");
+        return new Partida(mandante, visitante, dto.getResultado(), dto.getEstadio(), dto.getDataHora());
     }
-
+    
     private void atualizarPartida(Partida partida, PartidaDTO dto) {
-        partida.setMandante(buscarClubePorId(dto.getMandanteId(), "Clube mandante não encontrado"));
-        partida.setVisitante(buscarClubePorId(dto.getVisitanteId(), "Clube visitante não encontrado"));
         partida.setResultado(dto.getResultado());
         partida.setEstadio(dto.getEstadio());
         partida.setDataHora(dto.getDataHora());
     }
-
+    
     private void validar(Partida partida) {
         validarClubesDiferentes(partida);
         validarResultado(partida);
