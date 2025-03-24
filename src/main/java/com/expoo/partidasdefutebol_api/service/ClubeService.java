@@ -60,7 +60,7 @@ public class ClubeService {
     }
 
     public List<RetroDTO> getRetroAdversarios(Long clubeId) {
-        buscarClubePorId(clubeId); 
+        buscarClubePorId(clubeId);
         List<Partida> partidas = buscarPartidasDoClube(clubeId);
         
         if (partidas.isEmpty()) {
@@ -115,7 +115,7 @@ public class ClubeService {
     private void atualizarClubeComDTO(Clube clube, ClubeDTO clubeDTO) {
         clube.setNome(clubeDTO.getNome());
         clube.setEstado(clubeDTO.getEstado());
-        clube.setAtivo(clubeDTO.isAtivo());
+        clube.setAtivo(clubeDTO.getAtivo() != null ? clubeDTO.getAtivo() : false);
     }
 
     private List<Partida> buscarPartidasDoClube(Long clubeId) {

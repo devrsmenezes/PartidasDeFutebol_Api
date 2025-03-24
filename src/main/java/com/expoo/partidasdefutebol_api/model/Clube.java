@@ -38,6 +38,15 @@ public class Clube {
     private boolean ativo;
 
     public Clube() {
+
+    }
+
+    public Clube(Long id, String nome, String estado, LocalDate dataCriacao, boolean ativo) {
+        this.id = id;
+        this.nome = nome;
+        this.estado = estado;
+        this.dataCriacao = dataCriacao;
+        this.ativo = ativo;
     }
 
     public Clube(ClubeDTO clubeDTO) {
@@ -45,7 +54,7 @@ public class Clube {
         this.nome = clubeDTO.getNome();
         this.estado = clubeDTO.getEstado();
         this.dataCriacao = clubeDTO.getDataCriacao();
-        this.ativo = clubeDTO.isAtivo();
+        this.ativo = clubeDTO.getAtivo() != null ? clubeDTO.getAtivo() : false;
     }
 
     public Long getId() {
@@ -86,5 +95,16 @@ public class Clube {
 
     public void setAtivo(boolean ativo) {
         this.ativo = ativo;
+    }
+
+    @Override
+    public String toString() {
+        return "Clube{" +
+                "id=" + id +
+                ", nome='" + nome + '\'' +
+                ", estado='" + estado + '\'' +
+                ", dataCriacao=" + dataCriacao +
+                ", ativo=" + ativo +
+                '}';
     }
 }

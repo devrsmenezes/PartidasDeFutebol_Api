@@ -90,4 +90,16 @@ public class RetroDTO {
     public void setGolsSofridos(int golsSofridos) {
         this.golsSofridos = golsSofridos;
     }
+
+    @Override
+    public String toString() {
+        return "RetroDTO{" +
+                "nome='" + nome + '\'' +
+                ", vitorias=" + vitorias +
+                ", empates=" + empates +
+                ", derrotas=" + derrotas +
+                ", golsFeitos=" + golsFeitos +
+                ", golsSofridos=" + golsSofridos +
+                '}';
+    }
 }

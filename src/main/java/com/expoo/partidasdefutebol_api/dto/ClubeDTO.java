@@ -30,28 +30,31 @@ public class ClubeDTO {
     private LocalDate dataCriacao;
 
     @Schema(description = "Indica se o clube está ativo", example = "true")
-    private boolean ativo;
+    private Boolean ativo;
+
+    public ClubeDTO() {}
+
+    public ClubeDTO(Long id, String nome, String estado, LocalDate dataCriacao, Boolean ativo) {
+        this.id = id;
+        this.nome = nome;
+        this.estado = estado;
+        this.dataCriacao = dataCriacao;
+        this.ativo = ativo != null ? ativo : false;
+    }
 
     public Clube toEntity() {
-        Clube clube = new Clube();
-        clube.setId(this.id);
-        clube.setNome(this.nome);
-        clube.setEstado(this.estado);
-        clube.setDataCriacao(this.dataCriacao);
-        clube.setAtivo(this.ativo);
-        return clube;
+        return new Clube(this.id, this.nome, this.estado, this.dataCriacao, this.ativo != null ? this.ativo : false);
     }
 
     public static ClubeDTO fromEntity(Clube clube) {
-        ClubeDTO dto = new ClubeDTO();
-        dto.setId(clube.getId());
-        dto.setNome(clube.getNome());
-        dto.setEstado(clube.getEstado());
-        dto.setDataCriacao(clube.getDataCriacao());
-        dto.setAtivo(clube.isAtivo());
-        return dto;
+        return new ClubeDTO(
+            clube.getId(),
+            clube.getNome(),
+            clube.getEstado(),
+            clube.getDataCriacao(),
+            clube.isAtivo()
+        );
     }
-
 
     public Long getId() {
         return id;
@@ -85,11 +88,11 @@ public class ClubeDTO {
         this.dataCriacao = dataCriacao;
     }
 
-    public boolean isAtivo() {
+    public Boolean getAtivo() {
         return ativo;
     }
 
-    public void setAtivo(boolean ativo) {
+    public void setAtivo(Boolean ativo) {
         this.ativo = ativo;
     }
 }

@@ -41,12 +41,34 @@ public class PartidaDTO {
     public PartidaDTO() {
     }
 
+    public PartidaDTO(Long mandanteId, Long visitanteId, int golsMandante, int golsVisitante, String estadio, LocalDateTime dataHora) {
+        this.mandanteId = mandanteId;
+        this.visitanteId = visitanteId;
+        this.golsMandante = golsMandante;
+        this.golsVisitante = golsVisitante;
+        this.estadio = estadio;
+        this.dataHora = dataHora;
+        this.resultado = golsMandante + "-" + golsVisitante;
+    }
+
     public PartidaDTO(Long mandanteId, Long visitanteId, String resultado, String estadio, LocalDateTime dataHora) {
         this.mandanteId = mandanteId;
         this.visitanteId = visitanteId;
         this.resultado = resultado;
         this.estadio = estadio;
         this.dataHora = dataHora;
+        
+        String[] gols = resultado.split("-");
+        if (gols.length == 2) {
+            try {
+                this.golsMandante = Integer.parseInt(gols[0]);
+                this.golsVisitante = Integer.parseInt(gols[1]);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Formato de resultado inválido");
+            }
+        } else {
+            throw new IllegalArgumentException("Formato de resultado inválido");
+        }
     }
 
     public Long getId() {
@@ -79,6 +101,18 @@ public class PartidaDTO {
 
     public void setResultado(String resultado) {
         this.resultado = resultado;
+
+        String[] gols = resultado.split("-");
+        if (gols.length == 2) {
+            try {
+                this.golsMandante = Integer.parseInt(gols[0]);
+                this.golsVisitante = Integer.parseInt(gols[1]);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Formato de resultado inválido");
+            }
+        } else {
+            throw new IllegalArgumentException("Formato de resultado inválido");
+        }
     }
 
     public String getEstadio() {
@@ -103,6 +137,7 @@ public class PartidaDTO {
 
     public void setGolsMandante(int golsMandante) {
         this.golsMandante = golsMandante;
+        this.resultado = golsMandante + "-" + golsVisitante;
     }
 
     public int getGolsVisitante() {
@@ -111,6 +146,7 @@ public class PartidaDTO {
 
     public void setGolsVisitante(int golsVisitante) {
         this.golsVisitante = golsVisitante;
+        this.resultado = golsMandante + "-" + golsVisitante; 
     }
 
     @Override
