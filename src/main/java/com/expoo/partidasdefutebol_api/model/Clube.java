@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
 import java.time.LocalDate;
+import java.util.Objects;
 
 @Entity
 @Schema(description = "Entidade que representa um clube de futebol")
@@ -38,7 +39,6 @@ public class Clube {
     private boolean ativo;
 
     public Clube() {
-
     }
 
     public Clube(Long id, String nome, String estado, LocalDate dataCriacao, boolean ativo) {
@@ -55,6 +55,27 @@ public class Clube {
         this.estado = clubeDTO.getEstado();
         this.dataCriacao = clubeDTO.getDataCriacao();
         this.ativo = clubeDTO.getAtivo() != null ? clubeDTO.getAtivo() : false;
+    }
+
+    public ClubeDTO toDTO() {
+        return new ClubeDTO(
+            this.id,
+            this.nome,
+            this.estado,
+            this.dataCriacao,
+            this.ativo
+        );
+    }
+
+
+    public static Clube fromDTO(ClubeDTO dto) {
+        return new Clube(
+            dto.getId(),
+            dto.getNome(),
+            dto.getEstado(),
+            dto.getDataCriacao(),
+            dto.getAtivo() != null ? dto.getAtivo() : false
+        );
     }
 
     public Long getId() {
@@ -95,6 +116,19 @@ public class Clube {
 
     public void setAtivo(boolean ativo) {
         this.ativo = ativo;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Clube clube = (Clube) o;
+        return Objects.equals(id, clube.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
     }
 
     @Override

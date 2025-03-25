@@ -53,7 +53,6 @@ public class ClubeService {
         return ClubeDTO.fromEntity(atualizado);
     }
     
-
     @Transactional
     public void inativar(Long id) {
         Clube clube = buscarClubePorId(id);

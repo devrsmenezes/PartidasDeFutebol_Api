@@ -1,6 +1,7 @@
 package com.expoo.partidasdefutebol_api.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.Objects;
 
 @Schema(description = "DTO para representar o retrospecto de um clube")
 public class RetroDTO {
@@ -22,6 +23,9 @@ public class RetroDTO {
     @Schema(description = "Número de gols sofridos", example = "15")
     private int golsSofridos;
 
+    public RetroDTO() {
+    }
+
     public RetroDTO(String nome, int vitorias, int empates, int derrotas, int golsFeitos, int golsSofridos) {
         this.nome = nome;
         this.vitorias = vitorias;
@@ -29,6 +33,21 @@ public class RetroDTO {
         this.derrotas = derrotas;
         this.golsFeitos = golsFeitos;
         this.golsSofridos = golsSofridos;
+    }
+
+    @Schema(description = "Calcula o saldo de gols (gols feitos - gols sofridos)")
+    public int getSaldoGols() {
+        return golsFeitos - golsSofridos;
+    }
+
+    @Schema(description = "Calcula o total de jogos (vitórias + empates + derrotas)")
+    public int getTotalJogos() {
+        return vitorias + empates + derrotas;
+    }
+
+    @Schema(description = "Calcula os pontos (3 por vitória, 1 por empate)")
+    public int getPontos() {
+        return (vitorias * 3) + empates;
     }
 
     @Schema(description = "Obtém o nome do clube")
@@ -92,6 +111,24 @@ public class RetroDTO {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        RetroDTO retroDTO = (RetroDTO) o;
+        return vitorias == retroDTO.vitorias &&
+               empates == retroDTO.empates &&
+               derrotas == retroDTO.derrotas &&
+               golsFeitos == retroDTO.golsFeitos &&
+               golsSofridos == retroDTO.golsSofridos &&
+               Objects.equals(nome, retroDTO.nome);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(nome, vitorias, empates, derrotas, golsFeitos, golsSofridos);
+    }
+
+    @Override
     public String toString() {
         return "RetroDTO{" +
                 "nome='" + nome + '\'' +
@@ -100,6 +137,9 @@ public class RetroDTO {
                 ", derrotas=" + derrotas +
                 ", golsFeitos=" + golsFeitos +
                 ", golsSofridos=" + golsSofridos +
+                ", saldoGols=" + getSaldoGols() +
+                ", totalJogos=" + getTotalJogos() +
+                ", pontos=" + getPontos() +
                 '}';
     }
 }

@@ -47,16 +47,26 @@ public class Partida {
 
     @Schema(description = "Número de gols marcados pelo clube visitante", example = "1")
     private int golsVisitante;
-
-    protected Partida(Clube mandante2, Clube visitante2, int i, int j, String string, LocalDateTime localDateTime) {
-    }
     
-    public Partida (){}
+    public Partida() {}
 
     public Partida(Clube mandante, Clube visitante, String resultado, String estadio, LocalDateTime dataHora) {
         this.mandante = mandante;
         this.visitante = visitante;
         this.resultado = resultado;
+        this.estadio = estadio;
+        this.dataHora = dataHora;
+        
+        extrairGolsDoResultado(resultado);
+    }
+    
+
+    public Partida(Clube mandante, Clube visitante, int golsMandante, int golsVisitante, String estadio, LocalDateTime dataHora) {
+        this.mandante = mandante;
+        this.visitante = visitante;
+        this.golsMandante = golsMandante;
+        this.golsVisitante = golsVisitante;
+        this.resultado = golsMandante + "-" + golsVisitante;
         this.estadio = estadio;
         this.dataHora = dataHora;
     }
@@ -95,6 +105,7 @@ public class Partida {
 
     public void setResultado(String resultado) {
         this.resultado = resultado;
+        extrairGolsDoResultado(resultado);
     }
 
     public void setEstadio(String estadio) {
@@ -107,10 +118,31 @@ public class Partida {
 
     public void setGolsMandante(int golsMandante) {
         this.golsMandante = golsMandante;
+        atualizarResultado();
     }
 
     public void setGolsVisitante(int golsVisitante) {
         this.golsVisitante = golsVisitante;
+        atualizarResultado();
+    }
+    
+
+    private void extrairGolsDoResultado(String resultado) {
+        if (resultado != null && resultado.contains("-")) {
+            String[] gols = resultado.split("-");
+            if (gols.length == 2) {
+                try {
+                    this.golsMandante = Integer.parseInt(gols[0]);
+                    this.golsVisitante = Integer.parseInt(gols[1]);
+                } catch (NumberFormatException e) {
+
+                }
+            }
+        }
+    }
+    
+    private void atualizarResultado() {
+        this.resultado = this.golsMandante + "-" + this.golsVisitante;
     }
 
     @Override
@@ -133,6 +165,8 @@ public class Partida {
                 ", mandante=" + mandante.getNome() +
                 ", visitante=" + visitante.getNome() +
                 ", resultado='" + resultado + '\'' +
+                ", golsMandante=" + golsMandante +
+                ", golsVisitante=" + golsVisitante +
                 ", estadio='" + estadio + '\'' +
                 ", dataHora=" + dataHora +
                 '}';

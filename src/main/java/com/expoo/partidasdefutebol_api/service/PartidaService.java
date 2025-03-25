@@ -78,7 +78,12 @@ public class PartidaService {
     private Partida converterParaPartida(PartidaDTO dto) {
         Clube mandante = buscarClubePorId(dto.getMandanteId(), "Clube mandante não encontrado");
         Clube visitante = buscarClubePorId(dto.getVisitanteId(), "Clube visitante não encontrado");
-        return new Partida(mandante, visitante, dto.getResultado(), dto.getEstadio(), dto.getDataHora());
+        Partida partida = new Partida(mandante, visitante, dto.getResultado(), dto.getEstadio(), dto.getDataHora());
+        String[] gols = dto.getResultado().split("-");
+        partida.setGolsMandante(Integer.parseInt(gols[0]));
+        partida.setGolsVisitante(Integer.parseInt(gols[1]));
+        
+        return partida;
     }
     
     private void atualizarPartida(Partida partida, PartidaDTO dto) {
