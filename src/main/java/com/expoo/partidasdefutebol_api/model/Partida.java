@@ -48,9 +48,10 @@ public class Partida {
     @Schema(description = "Número de gols marcados pelo clube visitante", example = "1")
     private int golsVisitante;
 
-    protected Partida() {
-
+    protected Partida(Clube mandante2, Clube visitante2, int i, int j, String string, LocalDateTime localDateTime) {
     }
+    
+    public Partida (){}
 
     public Partida(Clube mandante, Clube visitante, String resultado, String estadio, LocalDateTime dataHora) {
         this.mandante = mandante;

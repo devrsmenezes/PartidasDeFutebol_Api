@@ -13,8 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/estadios")
-@Tag(name = "Estádios", description = "API para gerenciamento de estádios")
+@RequestMapping("/estadio")
+@Tag(name = "Estádio", description = "API para gerenciamento de estádios")
 public class EstadioController {
 
     private final EstadioService estadioService;

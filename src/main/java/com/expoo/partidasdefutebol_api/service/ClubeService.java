@@ -6,14 +6,15 @@ import com.expoo.partidasdefutebol_api.model.Clube;
 import com.expoo.partidasdefutebol_api.model.Partida;
 import com.expoo.partidasdefutebol_api.repository.ClubeRepository;
 import com.expoo.partidasdefutebol_api.repository.PartidaRepository;
-import java.util.*;
-import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class ClubeService {
@@ -27,40 +28,58 @@ public class ClubeService {
         this.partidaRepository = partidaRepository;
     }
 
+    @Transactional
     public void criar(ClubeDTO clubeDTO) {
         Clube novoClube = clubeDTO.toEntity();
+        validarClube(novoClube);
         clubeRepository.save(novoClube);
     }
 
+    @Transactional
     public ClubeDTO atualizar(Long id, ClubeDTO clubeDTO) {
+        System.out.println("Iniciando atualização do clube ID: " + id);
+        System.out.println("Dados recebidos: " + clubeDTO);
+        
         Clube clube = buscarClubePorId(id);
+        System.out.println("Clube antes da atualização: " + clube);
+        
         atualizarClubeComDTO(clube, clubeDTO);
+        System.out.println("Clube após atualização de campos: " + clube);
+        
+        validarClube(clube);
         Clube atualizado = clubeRepository.save(clube);
+        System.out.println("Clube após save: " + atualizado);
+        
         return ClubeDTO.fromEntity(atualizado);
     }
+    
 
+    @Transactional
     public void inativar(Long id) {
         Clube clube = buscarClubePorId(id);
         clube.setAtivo(false);
         clubeRepository.save(clube);
     }
 
+    @Transactional(readOnly = true)
     public ClubeDTO buscar(Long id) {
         return ClubeDTO.fromEntity(buscarClubePorId(id));
     }
 
+    @Transactional(readOnly = true)
     public Page<ClubeDTO> listar(String nome, String estado, Boolean ativo, Pageable pageable) {
         return clubeRepository.findByFiltros(nome, estado, ativo, pageable).map(ClubeDTO::fromEntity);
     }
 
+    @Transactional(readOnly = true)
     public RetroDTO getRetro(Long clubeId) {
         Clube clube = buscarClubePorId(clubeId);
         List<Partida> partidas = buscarPartidasDoClube(clubeId);
         return calcularRetro(clube, partidas);
     }
 
+    @Transactional(readOnly = true)
     public List<RetroDTO> getRetroAdversarios(Long clubeId) {
-        buscarClubePorId(clubeId);
         List<Partida> partidas = buscarPartidasDoClube(clubeId);
         
         if (partidas.isEmpty()) {
@@ -70,6 +89,7 @@ public class ClubeService {
         return calcularRetroAdversarios(clubeId, partidas);
     }
 
+    @Transactional(readOnly = true)
     public List<RetroDTO> compararClubes(List<Long> clubeIds) {
         List<Clube> clubes = clubeIds.stream()
                 .map(this::buscarClubePorId)
@@ -82,6 +102,7 @@ public class ClubeService {
                 .collect(Collectors.toList());
     }
 
+    @Transactional(readOnly = true)
     public List<RetroDTO> getRetroParaCadaAdversario(Long clubeId) {
         Clube clube = buscarClubePorId(clubeId);
         List<Partida> partidas = buscarPartidasDoClube(clubeId);
@@ -189,5 +210,14 @@ public class ClubeService {
         return partida.getMandante().getId().equals(clubeId) 
             ? partida.getVisitante().getNome() 
             : partida.getMandante().getNome();
+    }
+
+    private void validarClube(Clube clube) {
+        if (clube.getNome() == null || clube.getNome().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Nome do clube é obrigatório");
+        }
+        if (clube.getEstado() == null || clube.getEstado().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Estado do clube é obrigatório");
+        }
     }
 }

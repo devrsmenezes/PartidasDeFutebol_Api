@@ -8,6 +8,13 @@ import java.util.Objects;
 
 @Schema(description = "DTO para representar uma partida de futebol")
 public class PartidaDTO {
+
+    @Schema(description = "Nome do time mandante", example = "Time A")
+    private String mandanteNome;
+
+    @Schema(description = "Nome do time visitante", example = "Time B")
+    private String visitanteNome;
+
     @Schema(description = "ID da partida", example = "1")
     private Long id;
 
@@ -43,32 +50,40 @@ public class PartidaDTO {
 
     public PartidaDTO(Long mandanteId, Long visitanteId, int golsMandante, int golsVisitante, String estadio, LocalDateTime dataHora) {
         this.mandanteId = mandanteId;
+        this.mandanteNome = buscarNomeDoTime(mandanteId);
         this.visitanteId = visitanteId;
+        this.visitanteNome = buscarNomeDoTime(visitanteId);
         this.golsMandante = golsMandante;
         this.golsVisitante = golsVisitante;
         this.estadio = estadio;
         this.dataHora = dataHora;
-        this.resultado = golsMandante + "-" + golsVisitante;
+        atualizarResultado();
     }
 
     public PartidaDTO(Long mandanteId, Long visitanteId, String resultado, String estadio, LocalDateTime dataHora) {
         this.mandanteId = mandanteId;
+        this.mandanteNome = buscarNomeDoTime(mandanteId);
         this.visitanteId = visitanteId;
-        this.resultado = resultado;
+        this.visitanteNome = buscarNomeDoTime(visitanteId);
         this.estadio = estadio;
         this.dataHora = dataHora;
-        
-        String[] gols = resultado.split("-");
-        if (gols.length == 2) {
-            try {
-                this.golsMandante = Integer.parseInt(gols[0]);
-                this.golsVisitante = Integer.parseInt(gols[1]);
-            } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("Formato de resultado inválido");
-            }
-        } else {
-            throw new IllegalArgumentException("Formato de resultado inválido");
-        }
+        setResultado(resultado);
+    }
+
+    public String getMandanteNome() {
+        return mandanteNome;
+    }
+
+    public void setMandanteNome(String mandanteNome) {
+        this.mandanteNome = mandanteNome;
+    }
+
+    public String getVisitanteNome() {
+        return visitanteNome;
+    }
+
+    public void setVisitanteNome(String visitanteNome) {
+        this.visitanteNome = visitanteNome;
     }
 
     public Long getId() {
@@ -85,6 +100,7 @@ public class PartidaDTO {
 
     public void setMandanteId(Long mandanteId) {
         this.mandanteId = mandanteId;
+        this.mandanteNome = buscarNomeDoTime(mandanteId);
     }
 
     public Long getVisitanteId() {
@@ -93,6 +109,7 @@ public class PartidaDTO {
 
     public void setVisitanteId(Long visitanteId) {
         this.visitanteId = visitanteId;
+        this.visitanteNome = buscarNomeDoTime(visitanteId);
     }
 
     public String getResultado() {
@@ -137,7 +154,7 @@ public class PartidaDTO {
 
     public void setGolsMandante(int golsMandante) {
         this.golsMandante = golsMandante;
-        this.resultado = golsMandante + "-" + golsVisitante;
+        atualizarResultado();
     }
 
     public int getGolsVisitante() {
@@ -146,7 +163,17 @@ public class PartidaDTO {
 
     public void setGolsVisitante(int golsVisitante) {
         this.golsVisitante = golsVisitante;
-        this.resultado = golsMandante + "-" + golsVisitante; 
+        atualizarResultado();
+    }
+
+    private String buscarNomeDoTime(Long timeId) {
+        if (timeId == 1) return "Time A";
+        else if (timeId == 2) return "Time B";
+        else return "Time Desconhecido";
+    }
+
+    private void atualizarResultado() {
+        this.resultado = golsMandante + "-" + golsVisitante;
     }
 
     @Override
@@ -158,7 +185,9 @@ public class PartidaDTO {
                golsVisitante == that.golsVisitante &&
                Objects.equals(id, that.id) &&
                Objects.equals(mandanteId, that.mandanteId) &&
+               Objects.equals(mandanteNome, that.mandanteNome) &&
                Objects.equals(visitanteId, that.visitanteId) &&
+               Objects.equals(visitanteNome, that.visitanteNome) &&
                Objects.equals(resultado, that.resultado) &&
                Objects.equals(estadio, that.estadio) &&
                Objects.equals(dataHora, that.dataHora);
@@ -166,14 +195,16 @@ public class PartidaDTO {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, mandanteId, visitanteId, resultado, estadio, dataHora, golsMandante, golsVisitante);
+        return Objects.hash(id, mandanteId, mandanteNome, visitanteId, visitanteNome, resultado, estadio, dataHora, golsMandante, golsVisitante);
     }
 
     @Override
     public String toString() {
         return "PartidaDTO{" +
                "id=" + id +
+               ", mandanteNome='" + mandanteNome + '\'' +
                ", mandanteId=" + mandanteId +
+               ", visitanteNome='" + visitanteNome + '\'' +
                ", visitanteId=" + visitanteId +
                ", resultado='" + resultado + '\'' +
                ", estadio='" + estadio + '\'' +

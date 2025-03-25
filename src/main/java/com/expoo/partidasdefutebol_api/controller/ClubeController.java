@@ -16,8 +16,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 @RestController
-@RequestMapping("/clubes")
-@Tag(name = "Clubes", description = "API para gerenciamento de clubes de futebol")
+@RequestMapping("/clube")
+@Tag(name = "Clube", description = "API para gerenciamento de clubes de futebol")
 public class ClubeController {
 
     private final ClubeService clubeService;
@@ -43,15 +43,25 @@ public class ClubeController {
     @Operation(summary = "Atualizar um clube", description = "Atualiza os dados de um clube existente")
     @ApiResponse(responseCode = "200", description = "Clube atualizado com sucesso")
     @ApiResponse(responseCode = "400", description = "Erro ao atualizar o clube")
+    @ApiResponse(responseCode = "404", description = "Clube não encontrado")
     public ResponseEntity<?> atualizar(@PathVariable Long id, @Valid @RequestBody ClubeDTO clubeDTO) {
+        System.out.println("Recebida requisição PUT para clube ID: " + id);
+        System.out.println("Dados recebidos no controller: " + clubeDTO);
+        
         try {
             ClubeDTO clubeAtualizado = clubeService.atualizar(id, clubeDTO);
+            System.out.println("Clube atualizado com sucesso: " + clubeAtualizado);
             return ResponseEntity.ok(clubeAtualizado);
+        } catch (ResponseStatusException e) {
+            System.out.println("Erro ao atualizar clube: " + e.getMessage());
+            return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
         } catch (Exception e) {
+            System.out.println("Erro genérico ao atualizar clube: " + e.getMessage());
+            e.printStackTrace();
             return tratarExcecao(e, HttpStatus.BAD_REQUEST, "Erro ao atualizar o clube.");
         }
     }
-
+    
     @DeleteMapping("/{id}")
     @Operation(summary = "Inativar um clube", description = "Inativa um clube existente")
     @ApiResponse(responseCode = "204", description = "Clube inativado com sucesso")

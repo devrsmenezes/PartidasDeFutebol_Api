@@ -26,7 +26,7 @@ public class ClubeDTO {
 
     @Schema(description = "Data de criação do clube", example = "1895-11-15", required = true)
     @NotNull(message = "A data de criação não pode ser nula")
-    @PastOrPresent(message = "A data de criação deve ser uma data passada ou presente")
+    @PastOrPresent(message = "A data de criação deve ser no passado ou presente")
     private LocalDate dataCriacao;
 
     @Schema(description = "Indica se o clube está ativo", example = "true")
@@ -95,4 +95,14 @@ public class ClubeDTO {
     public void setAtivo(Boolean ativo) {
         this.ativo = ativo;
     }
+    
+    @Override
+    public String toString() {
+        return "ClubeDTO{" +
+            "nome='" + nome + '\'' +
+            ", estado='" + estado + '\'' +
+            ", ativo=" + ativo +
+            '}';
+    }
+
 }

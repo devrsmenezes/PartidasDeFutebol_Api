@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class PartidaService {
@@ -29,7 +30,7 @@ public class PartidaService {
     @Transactional
     public Partida cadastrar(PartidaDTO partidaDTO) {
         Partida partida = converterParaPartida(partidaDTO);
-        validar(partida);
+        validar(partida, null);
         return partidaRepository.save(partida);
     }
 
@@ -37,7 +38,7 @@ public class PartidaService {
     public Partida atualizar(Long id, PartidaDTO partidaDTO) {
         Partida partida = buscarPartidaPorId(id);
         atualizarPartida(partida, partidaDTO);
-        validar(partida);
+        validar(partida, id);
         return partidaRepository.save(partida);
     }
 
@@ -81,18 +82,21 @@ public class PartidaService {
     }
     
     private void atualizarPartida(Partida partida, PartidaDTO dto) {
+        String[] gols = dto.getResultado().split("-");
+        partida.setGolsMandante(Integer.parseInt(gols[0]));
+        partida.setGolsVisitante(Integer.parseInt(gols[1]));
         partida.setResultado(dto.getResultado());
         partida.setEstadio(dto.getEstadio());
         partida.setDataHora(dto.getDataHora());
     }
     
-    private void validar(Partida partida) {
+    private void validar(Partida partida, Long id) {
         validarClubesDiferentes(partida);
         validarResultado(partida);
         validarDataHora(partida);
         validarClubesAtivos(partida);
-        validarConflitosHorario(partida);
-        validarDisponibilidadeEstadio(partida);
+        validarConflitosHorario(partida, id);
+        validarDisponibilidadeEstadio(partida, id);
     }
 
     private void validarClubesDiferentes(Partida partida) {
@@ -126,19 +130,36 @@ public class PartidaService {
         }
     }
 
-    private void validarConflitosHorario(Partida partida) {
+    private void validarConflitosHorario(Partida partida, Long id) {
         LocalDateTime inicio = partida.getDataHora().minusHours(48);
         LocalDateTime fim = partida.getDataHora().plusHours(48);
         List<Partida> partidasProximas = partidaRepository.findByMandanteOrVisitanteAndDataHoraBetween(
                 partida.getMandante(), partida.getVisitante(), inicio, fim);
+        if (id != null) {
+            partidasProximas = partidasProximas.stream()
+                .filter(p -> !p.getId().equals(id))
+                .collect(Collectors.toList());
+        }
+        
         if (!partidasProximas.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Um dos clubes já possui partida marcada em horário próximo");
         }
     }
 
-    private void validarDisponibilidadeEstadio(Partida partida) {
-        if (partidaRepository.existsByEstadioAndDataHora(partida.getEstadio(), partida.getDataHora())) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Estádio já possui jogo marcado neste horário");
+    private void validarDisponibilidadeEstadio(Partida partida, Long id) {
+        if (id != null) {
+            boolean existeConflito = partidaRepository.findAll().stream()
+                .anyMatch(p -> p.getEstadio().equals(partida.getEstadio()) 
+                        && p.getDataHora().equals(partida.getDataHora())
+                        && !p.getId().equals(id));
+            
+            if (existeConflito) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Estádio já possui jogo marcado neste horário");
+            }
+        } else {
+            if (partidaRepository.existsByEstadioAndDataHora(partida.getEstadio(), partida.getDataHora())) {
+                throw new ResponseStatusException(HttpStatus.CONFLICT, "Estádio já possui jogo marcado neste horário");
+            }
         }
     }
 
