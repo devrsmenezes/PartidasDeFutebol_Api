@@ -1,6 +1,7 @@
 package com.expoo.partidasdefutebol_api.service;
 
 import com.expoo.partidasdefutebol_api.dto.PartidaDTO;
+import com.expoo.partidasdefutebol_api.dto.RetroDTO;
 import com.expoo.partidasdefutebol_api.model.Clube;
 import com.expoo.partidasdefutebol_api.model.Partida;
 import com.expoo.partidasdefutebol_api.repository.ClubeRepository;
@@ -13,7 +14,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -177,4 +180,63 @@ public class PartidaService {
         return clubeRepository.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, mensagemErro));
     }
+
+    @Transactional(readOnly = true)
+    public Map<String, Object> getConfrontoDireto(Long clube1Id, Long clube2Id) {
+        Clube clube1 = buscarClubePorId(clube1Id, "Clube 1 não encontrado");
+        Clube clube2 = buscarClubePorId(clube2Id, "Clube 2 não encontrado");
+    
+        List<Partida> partidas = partidaRepository.findConfrontosDiretos(clube1Id, clube2Id);
+    
+        RetroDTO retro1 = new RetroDTO(clube1.getNome(), 0, 0, 0, 0, 0);
+        RetroDTO retro2 = new RetroDTO(clube2.getNome(), 0, 0, 0, 0, 0);
+        
+        Map<String, RetroDTO> retroMap = new HashMap<>();
+        retroMap.put(clube1.getNome(), retro1);
+        retroMap.put(clube2.getNome(), retro2);
+    
+        for (Partida partida : partidas) {
+            atualizarRetro(partida, clube1, clube2, retroMap);
+        }
+    
+        List<RetroDTO> retroDTO = retroMap.values().stream()
+            .sorted((a, b) -> b.getNome().compareTo(a.getNome()))
+            .collect(Collectors.toList());
+    
+        Map<String, Object> resultado = new HashMap<>();
+        resultado.put("partidas", partidas);
+        resultado.put("retro", retroDTO);
+    
+        return resultado;
+    }
+    
+    private void atualizarRetro(Partida partida, Clube clube1, Clube clube2, Map<String, RetroDTO> retroMap) {
+        RetroDTO retro1 = retroMap.get(clube1.getNome());
+        RetroDTO retro2 = retroMap.get(clube2.getNome());
+    
+        if (partida.getMandante().getId().equals(clube1.getId())) {
+            atualizarRetroMandante(retro1, retro2, partida.getGolsMandante(), partida.getGolsVisitante());
+        } else if (partida.getMandante().getId().equals(clube2.getId())) {
+            atualizarRetroMandante(retro2, retro1, partida.getGolsMandante(), partida.getGolsVisitante());
+        }
+    }
+    
+    private void atualizarRetroMandante(RetroDTO mandante, RetroDTO visitante, int golsMandante, int golsVisitante) {
+        mandante.setGolsFeitos(mandante.getGolsFeitos() + golsMandante);
+        mandante.setGolsSofridos(mandante.getGolsSofridos() + golsVisitante);
+        visitante.setGolsFeitos(visitante.getGolsFeitos() + golsVisitante);
+        visitante.setGolsSofridos(visitante.getGolsSofridos() + golsMandante);
+    
+        if (golsMandante > golsVisitante) {
+            mandante.setVitorias(mandante.getVitorias() + 1);
+            visitante.setDerrotas(visitante.getDerrotas() + 1);
+        } else if (golsMandante < golsVisitante) {
+            mandante.setDerrotas(mandante.getDerrotas() + 1);
+            visitante.setVitorias(visitante.getVitorias() + 1);
+        } else {
+            mandante.setEmpates(mandante.getEmpates() + 1);
+            visitante.setEmpates(visitante.getEmpates() + 1);
+        }
+    } 
 }
+

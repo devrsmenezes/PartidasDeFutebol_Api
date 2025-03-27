@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -105,6 +106,20 @@ public class PartidaController {
             return ResponseEntity.ok(partidas);
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).build();
+        }
+    }
+    @GetMapping("/confronto-direto")
+    @Operation(summary = "Obter confronto direto entre dois clubes", description = "Retorna todas as partidas e o retrospecto entre dois clubes")
+    @ApiResponse(responseCode = "200", description = "Confronto retornado com sucesso")
+    @ApiResponse(responseCode = "404", description = "Um dos clubes não encontrado")
+    public ResponseEntity<Map<String, Object>> getConfrontoDireto(
+        @RequestParam Long clube1Id,
+        @RequestParam Long clube2Id) {
+        try {
+            Map<String, Object> resultado = partidaService.getConfrontoDireto(clube1Id, clube2Id);
+            return ResponseEntity.ok(resultado);
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(null);
         }
     }
 }

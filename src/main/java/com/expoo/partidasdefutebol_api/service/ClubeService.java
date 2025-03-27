@@ -78,11 +78,51 @@ public class ClubeService {
     }
 
     @Transactional(readOnly = true)
+    public RetroDTO getRetro(Long clubeId, Boolean mandante) {
+        Clube clube = buscarClubePorId(clubeId);
+        List<Partida> partidas;
+        
+        if (mandante != null) {
+            if (mandante) {
+                partidas = partidaRepository.findByMandanteId(clubeId);
+            } else {
+                partidas = partidaRepository.findByVisitanteId(clubeId);
+            }
+        } else {
+            partidas = buscarPartidasDoClube(clubeId);
+        }
+        
+        return calcularRetro(clube, partidas);
+    }
+
+    @Transactional(readOnly = true)
     public List<RetroDTO> getRetroAdversarios(Long clubeId) {
         List<Partida> partidas = buscarPartidasDoClube(clubeId);
         
         if (partidas.isEmpty()) {
             return new ArrayList<>(); 
+        }
+        
+        return calcularRetroAdversarios(clubeId, partidas);
+    }
+
+    @Transactional(readOnly = true)
+    public List<RetroDTO> getRetroAdversarios(Long clubeId, Boolean mandante) {
+        buscarClubePorId(clubeId);
+        
+        List<Partida> partidas;
+        if (mandante != null) {
+            if (mandante) {
+                partidas = partidaRepository.findByMandanteId(clubeId);
+            } else {
+                partidas = partidaRepository.findByVisitanteId(clubeId);
+            }
+        } else {
+            partidas = buscarPartidasDoClube(clubeId);
+        }
+        
+        if (partidas.isEmpty()) {
+            return new ArrayList<>();
         }
         
         return calcularRetroAdversarios(clubeId, partidas);

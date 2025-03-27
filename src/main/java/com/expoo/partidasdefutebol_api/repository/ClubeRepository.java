@@ -1,6 +1,7 @@
 package com.expoo.partidasdefutebol_api.repository;
 
 import com.expoo.partidasdefutebol_api.model.Clube;
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -22,4 +23,6 @@ public interface ClubeRepository extends JpaRepository<Clube, Long>, JpaSpecific
             @Param("ativo") Boolean ativo,
             Pageable pageable
     );
+
+    List<Clube> findByAtivoTrue();
 }

@@ -109,10 +109,13 @@ public class ClubeController {
     @GetMapping("/{clubeId}/retro")
     @Operation(summary = "Obter retrospecto de um clube", description = "Retorna o retrospecto de um clube específico")
     @ApiResponse(responseCode = "200", description = "Retrospecto retornado com sucesso")
+    @ApiResponse(responseCode = "404", description = "Clube não encontrado")
     @ApiResponse(responseCode = "400", description = "Erro ao processar a solicitação")
-    public ResponseEntity<?> getRetro(@PathVariable Long clubeId) {
+    public ResponseEntity<?> getRetro(
+            @PathVariable Long clubeId,
+            @RequestParam(required = false) Boolean mandante) {
         try {
-            RetroDTO retro = clubeService.getRetro(clubeId);
+            RetroDTO retro = clubeService.getRetro(clubeId, mandante);
             return ResponseEntity.ok(retro);
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
@@ -125,18 +128,22 @@ public class ClubeController {
         String mensagem = e instanceof IllegalArgumentException ? e.getMessage() : mensagemPadrao;
         return ResponseEntity.status(status).body("Erro: " + mensagem);
     }
-
+    
     @GetMapping("/{clubeId}/retro-adversarios")
     @Operation(summary = "Obter retrospecto contra adversários", description = "Retorna o retrospecto de um clube contra seus adversários")
     @ApiResponse(responseCode = "200", description = "Retrospecto retornado com sucesso")
+    @ApiResponse(responseCode = "404", description = "Clube não encontrado")
     @ApiResponse(responseCode = "400", description = "Erro ao processar a solicitação")
-    public ResponseEntity<?> getRetroAdversarios(@PathVariable Long clubeId) {
+    public ResponseEntity<?> getRetroAdversarios(
+            @PathVariable Long clubeId,
+            @RequestParam(required = false) Boolean mandante) {
         try {
-            List<RetroDTO> retro = clubeService.getRetroAdversarios(clubeId);
+            List<RetroDTO> retro = clubeService.getRetroAdversarios(clubeId, mandante);
             return ResponseEntity.ok(retro);
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body("Erro ao processar a solicitação.");
+            return tratarExcecao(e, HttpStatus.BAD_REQUEST, "Erro ao processar a solicitação.");
         }
     }
 }
