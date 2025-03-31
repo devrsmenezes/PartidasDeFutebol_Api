@@ -124,7 +124,7 @@ public class PartidaController {
             }
         }
         
-        @GetMapping("/ranking")
+    @GetMapping("/ranking")
     @Operation(summary = "Ranking de clubes", description = "Retorna o ranking dos clubes conforme o critério selecionado")
     @ApiResponse(responseCode = "200", description = "Ranking retornado com sucesso")
     public ResponseEntity<?> getRanking(
