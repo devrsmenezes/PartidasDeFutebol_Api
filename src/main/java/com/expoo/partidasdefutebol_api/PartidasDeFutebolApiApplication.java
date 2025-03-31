@@ -18,5 +18,4 @@ public class PartidasDeFutebolApiApplication {
     public static void main(String[] args) {
         SpringApplication.run(PartidasDeFutebolApiApplication.class, args);
     }
-
 }

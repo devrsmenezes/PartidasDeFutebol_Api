@@ -237,6 +237,69 @@ public class PartidaService {
             mandante.setEmpates(mandante.getEmpates() + 1);
             visitante.setEmpates(visitante.getEmpates() + 1);
         }
-    } 
+    }
+
+    @Transactional(readOnly = true)
+    public List<Map<String, Object>> getRanking(String criterio, Boolean goleadas, String tipo) {
+        List<Partida> partidas = partidaRepository.findAll();
+
+        if (Boolean.TRUE.equals(goleadas)) {
+        partidas = partidas.stream()
+            .filter(p -> Math.abs(p.getGolsMandante() - p.getGolsVisitante()) >= 3)
+            .collect(Collectors.toList());
+        }
+
+         Map<Clube, RetroDTO> rankingMap = new HashMap<>();
+
+        for (Partida p : partidas) {
+        if (tipo == null || tipo.equalsIgnoreCase("mandante")) {
+            atualizarRanking(rankingMap, p.getMandante(), p.getGolsMandante(), p.getGolsVisitante(), p);
+        }
+        if (tipo == null || tipo.equalsIgnoreCase("visitante")) {
+            atualizarRanking(rankingMap, p.getVisitante(), p.getGolsVisitante(), p.getGolsMandante(), p);
+        }
+        }
+
+        List<Map<String, Object>> resultado = rankingMap.entrySet().stream()
+        .map(entry -> {
+            Clube c = entry.getKey();
+            RetroDTO r = entry.getValue();
+            int pontos = r.getVitorias() * 3 + r.getEmpates();
+            Map<String, Object> map = new HashMap<>();
+            map.put("clube", c.getNome());
+            map.put("jogos", r.getVitorias() + r.getEmpates() + r.getDerrotas());
+            map.put("vitorias", r.getVitorias());
+            map.put("gols", r.getGolsFeitos());
+            map.put("pontos", pontos);
+            return map;
+        })
+        .filter(m -> switch (criterio.toLowerCase()) {
+            case "jogos" -> (int) m.get("jogos") > 0;
+            case "vitorias" -> (int) m.get("vitorias") > 0;
+            case "gols" -> (int) m.get("gols") > 0;
+            case "pontos" -> (int) m.get("pontos") > 0;
+            default -> false;
+        })
+        .sorted((m1, m2) -> Integer.compare((int) m2.get(criterio.toLowerCase()), (int) m1.get(criterio.toLowerCase())))
+        .collect(Collectors.toList());
+
+        return resultado;
+    }
+
+    private void atualizarRanking(Map<Clube, RetroDTO> ranking, Clube clube, int golsFeitos, int golsSofridos, Partida partida) {
+    RetroDTO retro = ranking.getOrDefault(clube, new RetroDTO(clube.getNome(), 0, 0, 0, 0, 0));
+    retro.setGolsFeitos(retro.getGolsFeitos() + golsFeitos);
+    retro.setGolsSofridos(retro.getGolsSofridos() + golsSofridos);
+
+    if (golsFeitos > golsSofridos) {
+        retro.setVitorias(retro.getVitorias() + 1);
+       } else if (golsFeitos < golsSofridos) {
+        retro.setDerrotas(retro.getDerrotas() + 1);
+       } else {
+        retro.setEmpates(retro.getEmpates() + 1);
+       }
+
+    ranking.put(clube, retro);
+    }
 }
 
