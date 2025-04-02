@@ -39,20 +39,20 @@ public class ClubeService {
     public ClubeDTO atualizar(Long id, ClubeDTO clubeDTO) {
         System.out.println("Iniciando atualização do clube ID: " + id);
         System.out.println("Dados recebidos: " + clubeDTO);
-        
+
         Clube clube = buscarClubePorId(id);
         System.out.println("Clube antes da atualização: " + clube);
-        
+
         atualizarClubeComDTO(clube, clubeDTO);
         System.out.println("Clube após atualização de campos: " + clube);
-        
+
         validarClube(clube);
         Clube atualizado = clubeRepository.save(clube);
         System.out.println("Clube após save: " + atualizado);
-        
+
         return ClubeDTO.fromEntity(atualizado);
     }
-    
+
     @Transactional
     public void inativar(Long id) {
         Clube clube = buscarClubePorId(id);
@@ -81,7 +81,7 @@ public class ClubeService {
     public RetroDTO getRetro(Long clubeId, Boolean mandante) {
         Clube clube = buscarClubePorId(clubeId);
         List<Partida> partidas;
-        
+
         if (mandante != null) {
             if (mandante) {
                 partidas = partidaRepository.findByMandanteId(clubeId);
@@ -91,25 +91,25 @@ public class ClubeService {
         } else {
             partidas = buscarPartidasDoClube(clubeId);
         }
-        
+
         return calcularRetro(clube, partidas);
     }
 
     @Transactional(readOnly = true)
     public List<RetroDTO> getRetroAdversarios(Long clubeId) {
         List<Partida> partidas = buscarPartidasDoClube(clubeId);
-        
+
         if (partidas.isEmpty()) {
-            return new ArrayList<>(); 
+            return new ArrayList<>();
         }
-        
+
         return calcularRetroAdversarios(clubeId, partidas);
     }
 
     @Transactional(readOnly = true)
     public List<RetroDTO> getRetroAdversarios(Long clubeId, Boolean mandante) {
         buscarClubePorId(clubeId);
-        
+
         List<Partida> partidas;
         if (mandante != null) {
             if (mandante) {
@@ -120,36 +120,36 @@ public class ClubeService {
         } else {
             partidas = buscarPartidasDoClube(clubeId);
         }
-        
+
         if (partidas.isEmpty()) {
             return new ArrayList<>();
         }
-        
+
         return calcularRetroAdversarios(clubeId, partidas);
     }
 
     @Transactional(readOnly = true)
     public List<RetroDTO> compararClubes(List<Long> clubeIds) {
         List<Clube> clubes = clubeIds.stream()
-                .map(this::buscarClubePorId)
-                .collect(Collectors.toList());
+            .map(this::buscarClubePorId)
+            .collect(Collectors.toList());
 
         List<Partida> todasPartidas = buscarPartidasDosClubes(clubeIds);
 
         return clubes.stream()
-                .map(clube -> calcularRetroComparado(clube, todasPartidas, clubeIds))
-                .collect(Collectors.toList());
+            .map(clube -> calcularRetroComparado(clube, todasPartidas, clubeIds))
+            .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public List<RetroDTO> getRetroParaCadaAdversario(Long clubeId) {
         Clube clube = buscarClubePorId(clubeId);
         List<Partida> partidas = buscarPartidasDoClube(clubeId);
-        
+
         Set<Long> idTimesEnfrentados = partidas.stream()
             .map(partida -> getAdversarioId(partida, clubeId))
             .collect(Collectors.toSet());
-        
+
         return idTimesEnfrentados.stream()
             .map(adversarioId -> calcularRetroContraAdversario(clube, adversarioId, partidas))
             .collect(Collectors.toList());
@@ -158,18 +158,18 @@ public class ClubeService {
     private RetroDTO calcularRetroContraAdversario(Clube clube, Long adversarioId, List<Partida> partidas) {
         Clube adversario = buscarClubePorId(adversarioId);
         RetroDTO retro = new RetroDTO(adversario.getNome(), 0, 0, 0, 0, 0);
-        
+
         partidas.stream()
-            .filter(partida -> partida.getMandante().getId().equals(adversarioId) || 
+            .filter(partida -> partida.getMandante().getId().equals(adversarioId) ||
                                partida.getVisitante().getId().equals(adversarioId))
             .forEach(partida -> atualizarRetro(retro, partida, clube.getId()));
-        
+
         return retro;
     }
 
     private Clube buscarClubePorId(Long id) {
         return clubeRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Clube não encontrado"));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Clube não encontrado"));
     }
 
     private void atualizarClubeComDTO(Clube clube, ClubeDTO clubeDTO) {
@@ -198,10 +198,10 @@ public class ClubeService {
         for (Partida partida : partidas) {
             Long adversarioId = getAdversarioId(partida, clubeId);
             String nomeAdversario = getNomeAdversario(partida, clubeId);
-            
-            RetroDTO retro = retroPorAdversario.computeIfAbsent(adversarioId, 
+
+            RetroDTO retro = retroPorAdversario.computeIfAbsent(adversarioId,
                 k -> new RetroDTO(nomeAdversario, 0, 0, 0, 0, 0));
-            
+
             atualizarRetro(retro, partida, clubeId);
         }
 
@@ -211,11 +211,11 @@ public class ClubeService {
     private RetroDTO calcularRetroComparado(Clube clube, List<Partida> partidas, List<Long> clubeIds) {
         RetroDTO retro = new RetroDTO(clube.getNome(), 0, 0, 0, 0, 0);
         partidas.stream()
-                .filter(partida -> partida.getMandante().getId().equals(clube.getId()) || 
-                                   partida.getVisitante().getId().equals(clube.getId()))
-                .filter(partida -> clubeIds.contains(partida.getMandante().getId()) && 
-                                   clubeIds.contains(partida.getVisitante().getId()))
-                .forEach(partida -> atualizarRetro(retro, partida, clube.getId()));
+            .filter(partida -> partida.getMandante().getId().equals(clube.getId()) ||
+                               partida.getVisitante().getId().equals(clube.getId()))
+            .filter(partida -> clubeIds.contains(partida.getMandante().getId()) &&
+                               clubeIds.contains(partida.getVisitante().getId()))
+            .forEach(partida -> atualizarRetro(retro, partida, clube.getId()));
         return retro;
     }
 
@@ -240,14 +240,14 @@ public class ClubeService {
     }
 
     private Long getAdversarioId(Partida partida, Long clubeId) {
-        return partida.getMandante().getId().equals(clubeId) 
-            ? partida.getVisitante().getId() 
+        return partida.getMandante().getId().equals(clubeId)
+            ? partida.getVisitante().getId()
             : partida.getMandante().getId();
     }
 
     private String getNomeAdversario(Partida partida, Long clubeId) {
-        return partida.getMandante().getId().equals(clubeId) 
-            ? partida.getVisitante().getNome() 
+        return partida.getMandante().getId().equals(clubeId)
+            ? partida.getVisitante().getNome()
             : partida.getMandante().getNome();
     }
 

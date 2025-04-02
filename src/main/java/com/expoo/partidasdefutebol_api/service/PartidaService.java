@@ -8,19 +8,19 @@ import com.expoo.partidasdefutebol_api.repository.ClubeRepository;
 import com.expoo.partidasdefutebol_api.repository.PartidaRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 public class PartidaService {
+
     private final PartidaRepository partidaRepository;
     private final ClubeRepository clubeRepository;
 
@@ -59,7 +59,7 @@ public class PartidaService {
     }
 
     @Transactional(readOnly = true)
-    public Page<Partida> listar(Long clubeId, String estadio, Pageable pageable) {
+    public Page<Partida> listar(Long clubeId, String estadio, Boolean goleadas, Pageable pageable) {
         Page<Partida> partidas;
         if (clubeId != null && estadio != null && !estadio.isEmpty()) {
             partidas = partidaRepository.findByMandanteIdOrVisitanteIdAndEstadioContainingIgnoreCase(clubeId, clubeId, estadio, pageable);
@@ -70,14 +70,21 @@ public class PartidaService {
         } else {
             partidas = partidaRepository.findAll(pageable);
         }
-        
+
         if (partidas.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Não há lista de partidas");
         }
-        
+
+        if (Boolean.TRUE.equals(goleadas)) {
+            List<Partida> filtradas = partidas.stream()
+                .filter(p -> Math.abs(p.getGolsMandante() - p.getGolsVisitante()) >= 3)
+                .collect(Collectors.toList());
+            return new PageImpl<>(filtradas, pageable, filtradas.size());
+        }
+
         return partidas;
     }
-    
+
     private Partida converterParaPartida(PartidaDTO dto) {
         Clube mandante = buscarClubePorId(dto.getMandanteId(), "Clube mandante não encontrado");
         Clube visitante = buscarClubePorId(dto.getVisitanteId(), "Clube visitante não encontrado");
@@ -85,10 +92,9 @@ public class PartidaService {
         String[] gols = dto.getResultado().split("-");
         partida.setGolsMandante(Integer.parseInt(gols[0]));
         partida.setGolsVisitante(Integer.parseInt(gols[1]));
-        
         return partida;
     }
-    
+
     private void atualizarPartida(Partida partida, PartidaDTO dto) {
         String[] gols = dto.getResultado().split("-");
         partida.setGolsMandante(Integer.parseInt(gols[0]));
@@ -97,7 +103,7 @@ public class PartidaService {
         partida.setEstadio(dto.getEstadio());
         partida.setDataHora(dto.getDataHora());
     }
-    
+
     private void validar(Partida partida, Long id) {
         validarClubesDiferentes(partida);
         validarResultado(partida);
@@ -127,7 +133,7 @@ public class PartidaService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Data e hora não podem estar no futuro");
         }
         if (partida.getDataHora().isBefore(partida.getMandante().getDataCriacao().atStartOfDay()) ||
-                partida.getDataHora().isBefore(partida.getVisitante().getDataCriacao().atStartOfDay())) {
+            partida.getDataHora().isBefore(partida.getVisitante().getDataCriacao().atStartOfDay())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Data da partida é anterior à criação de um dos clubes");
         }
     }
@@ -142,13 +148,14 @@ public class PartidaService {
         LocalDateTime inicio = partida.getDataHora().minusHours(48);
         LocalDateTime fim = partida.getDataHora().plusHours(48);
         List<Partida> partidasProximas = partidaRepository.findByMandanteOrVisitanteAndDataHoraBetween(
-                partida.getMandante(), partida.getVisitante(), inicio, fim);
+            partida.getMandante(), partida.getVisitante(), inicio, fim);
+
         if (id != null) {
             partidasProximas = partidasProximas.stream()
                 .filter(p -> !p.getId().equals(id))
                 .collect(Collectors.toList());
         }
-        
+
         if (!partidasProximas.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Um dos clubes já possui partida marcada em horário próximo");
         }
@@ -156,12 +163,11 @@ public class PartidaService {
 
     private void validarDisponibilidadeEstadio(Partida partida, Long id) {
         if (id != null) {
-            boolean existeConflito = partidaRepository.findAll().stream()
-                .anyMatch(p -> p.getEstadio().equals(partida.getEstadio()) 
-                        && p.getDataHora().equals(partida.getDataHora())
-                        && !p.getId().equals(id));
-            
-            if (existeConflito) {
+            boolean conflito = partidaRepository.findAll().stream()
+                .anyMatch(p -> p.getEstadio().equals(partida.getEstadio()) &&
+                               p.getDataHora().equals(partida.getDataHora()) &&
+                               !p.getId().equals(id));
+            if (conflito) {
                 throw new ResponseStatusException(HttpStatus.CONFLICT, "Estádio já possui jogo marcado neste horário");
             }
         } else {
@@ -173,60 +179,60 @@ public class PartidaService {
 
     private Partida buscarPartidaPorId(Long id) {
         return partidaRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Partida não encontrada"));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Partida não encontrada"));
     }
 
     private Clube buscarClubePorId(Long id, String mensagemErro) {
         return clubeRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, mensagemErro));
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, mensagemErro));
     }
 
     @Transactional(readOnly = true)
     public Map<String, Object> getConfrontoDireto(Long clube1Id, Long clube2Id) {
         Clube clube1 = buscarClubePorId(clube1Id, "Clube 1 não encontrado");
         Clube clube2 = buscarClubePorId(clube2Id, "Clube 2 não encontrado");
-    
+
         List<Partida> partidas = partidaRepository.findConfrontosDiretos(clube1Id, clube2Id);
-    
+
         RetroDTO retro1 = new RetroDTO(clube1.getNome(), 0, 0, 0, 0, 0);
         RetroDTO retro2 = new RetroDTO(clube2.getNome(), 0, 0, 0, 0, 0);
-        
+
         Map<String, RetroDTO> retroMap = new HashMap<>();
         retroMap.put(clube1.getNome(), retro1);
         retroMap.put(clube2.getNome(), retro2);
-    
+
         for (Partida partida : partidas) {
             atualizarRetro(partida, clube1, clube2, retroMap);
         }
-    
+
         List<RetroDTO> retroDTO = retroMap.values().stream()
-            .sorted((a, b) -> b.getNome().compareTo(a.getNome()))
-            .collect(Collectors.toList());
-    
+                .sorted(Comparator.comparing(RetroDTO::getNome))
+                .collect(Collectors.toList());
+
         Map<String, Object> resultado = new HashMap<>();
         resultado.put("partidas", partidas);
         resultado.put("retro", retroDTO);
-    
+
         return resultado;
     }
-    
+
     private void atualizarRetro(Partida partida, Clube clube1, Clube clube2, Map<String, RetroDTO> retroMap) {
         RetroDTO retro1 = retroMap.get(clube1.getNome());
         RetroDTO retro2 = retroMap.get(clube2.getNome());
-    
+
         if (partida.getMandante().getId().equals(clube1.getId())) {
             atualizarRetroMandante(retro1, retro2, partida.getGolsMandante(), partida.getGolsVisitante());
         } else if (partida.getMandante().getId().equals(clube2.getId())) {
             atualizarRetroMandante(retro2, retro1, partida.getGolsMandante(), partida.getGolsVisitante());
         }
     }
-    
+
     private void atualizarRetroMandante(RetroDTO mandante, RetroDTO visitante, int golsMandante, int golsVisitante) {
         mandante.setGolsFeitos(mandante.getGolsFeitos() + golsMandante);
         mandante.setGolsSofridos(mandante.getGolsSofridos() + golsVisitante);
         visitante.setGolsFeitos(visitante.getGolsFeitos() + golsVisitante);
         visitante.setGolsSofridos(visitante.getGolsSofridos() + golsMandante);
-    
+
         if (golsMandante > golsVisitante) {
             mandante.setVitorias(mandante.getVitorias() + 1);
             visitante.setDerrotas(visitante.getDerrotas() + 1);
@@ -244,62 +250,58 @@ public class PartidaService {
         List<Partida> partidas = partidaRepository.findAll();
 
         if (Boolean.TRUE.equals(goleadas)) {
-        partidas = partidas.stream()
-            .filter(p -> Math.abs(p.getGolsMandante() - p.getGolsVisitante()) >= 3)
-            .collect(Collectors.toList());
+            partidas = partidas.stream()
+                    .filter(p -> Math.abs(p.getGolsMandante() - p.getGolsVisitante()) >= 3)
+                    .collect(Collectors.toList());
         }
 
-         Map<Clube, RetroDTO> rankingMap = new HashMap<>();
+        Map<Clube, RetroDTO> rankingMap = new HashMap<>();
 
         for (Partida p : partidas) {
-        if (tipo == null || tipo.equalsIgnoreCase("mandante")) {
-            atualizarRanking(rankingMap, p.getMandante(), p.getGolsMandante(), p.getGolsVisitante(), p);
-        }
-        if (tipo == null || tipo.equalsIgnoreCase("visitante")) {
-            atualizarRanking(rankingMap, p.getVisitante(), p.getGolsVisitante(), p.getGolsMandante(), p);
-        }
+            if (tipo == null || tipo.equalsIgnoreCase("mandante")) {
+                atualizarRanking(rankingMap, p.getMandante(), p.getGolsMandante(), p.getGolsVisitante());
+            }
+            if (tipo == null || tipo.equalsIgnoreCase("visitante")) {
+                atualizarRanking(rankingMap, p.getVisitante(), p.getGolsVisitante(), p.getGolsMandante());
+            }
         }
 
-        List<Map<String, Object>> resultado = rankingMap.entrySet().stream()
-        .map(entry -> {
-            Clube c = entry.getKey();
-            RetroDTO r = entry.getValue();
-            int pontos = r.getVitorias() * 3 + r.getEmpates();
-            Map<String, Object> map = new HashMap<>();
-            map.put("clube", c.getNome());
-            map.put("jogos", r.getVitorias() + r.getEmpates() + r.getDerrotas());
-            map.put("vitorias", r.getVitorias());
-            map.put("gols", r.getGolsFeitos());
-            map.put("pontos", pontos);
-            return map;
-        })
-        .filter(m -> switch (criterio.toLowerCase()) {
-            case "jogos" -> (int) m.get("jogos") > 0;
-            case "vitorias" -> (int) m.get("vitorias") > 0;
-            case "gols" -> (int) m.get("gols") > 0;
-            case "pontos" -> (int) m.get("pontos") > 0;
-            default -> false;
-        })
-        .sorted((m1, m2) -> Integer.compare((int) m2.get(criterio.toLowerCase()), (int) m1.get(criterio.toLowerCase())))
-        .collect(Collectors.toList());
-
-        return resultado;
+        return rankingMap.entrySet().stream()
+                .map(entry -> {
+                    Clube clube = entry.getKey();
+                    RetroDTO retro = entry.getValue();
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("clube", clube.getNome());
+                    map.put("jogos", retro.getTotalJogos());
+                    map.put("vitorias", retro.getVitorias());
+                    map.put("gols", retro.getGolsFeitos());
+                    map.put("pontos", retro.getPontos());
+                    return map;
+                })
+                .filter(m -> switch (criterio.toLowerCase()) {
+                    case "jogos" -> (int) m.get("jogos") > 0;
+                    case "vitorias" -> (int) m.get("vitorias") > 0;
+                    case "gols" -> (int) m.get("gols") > 0;
+                    case "pontos" -> (int) m.get("pontos") > 0;
+                    default -> false;
+                })
+                .sorted(Comparator.comparingInt(m -> -((int) m.get(criterio.toLowerCase()))))
+                .collect(Collectors.toList());
     }
 
-    private void atualizarRanking(Map<Clube, RetroDTO> ranking, Clube clube, int golsFeitos, int golsSofridos, Partida partida) {
-    RetroDTO retro = ranking.getOrDefault(clube, new RetroDTO(clube.getNome(), 0, 0, 0, 0, 0));
-    retro.setGolsFeitos(retro.getGolsFeitos() + golsFeitos);
-    retro.setGolsSofridos(retro.getGolsSofridos() + golsSofridos);
+    private void atualizarRanking(Map<Clube, RetroDTO> ranking, Clube clube, int golsFeitos, int golsSofridos) {
+        RetroDTO retro = ranking.getOrDefault(clube, new RetroDTO(clube.getNome(), 0, 0, 0, 0, 0));
+        retro.setGolsFeitos(retro.getGolsFeitos() + golsFeitos);
+        retro.setGolsSofridos(retro.getGolsSofridos() + golsSofridos);
 
-    if (golsFeitos > golsSofridos) {
-        retro.setVitorias(retro.getVitorias() + 1);
-       } else if (golsFeitos < golsSofridos) {
-        retro.setDerrotas(retro.getDerrotas() + 1);
-       } else {
-        retro.setEmpates(retro.getEmpates() + 1);
-       }
+        if (golsFeitos > golsSofridos) {
+            retro.setVitorias(retro.getVitorias() + 1);
+        } else if (golsFeitos < golsSofridos) {
+            retro.setDerrotas(retro.getDerrotas() + 1);
+        } else {
+            retro.setEmpates(retro.getEmpates() + 1);
+        }
 
-    ranking.put(clube, retro);
+        ranking.put(clube, retro);
     }
 }
-
