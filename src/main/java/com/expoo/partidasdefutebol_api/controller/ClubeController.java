@@ -135,6 +135,21 @@ public class ClubeController {
         }
     }
 
+    @GetMapping("/{clubeId}/retro-goleadas")
+    @Operation(summary = "Obter retrospecto com goleadas", description = "Retorna o retrospecto de um clube considerando apenas goleadas (diferença de 3 ou mais gols)")
+    @ApiResponse(responseCode = "200", description = "Retrospecto com goleadas retornado com sucesso")
+    @ApiResponse(responseCode = "400", description = "Erro ao processar a solicitação")
+    public ResponseEntity<?> getRetroGoleadas(
+            @Parameter(description = "ID do clube") @PathVariable Long clubeId,
+            @Parameter(description = "Filtrar apenas jogos como mandante (true) ou visitante (false)") @RequestParam(required = false) Boolean mandante) {
+        try {
+            RetroDTO retro = clubeService.getRetroGoleadas(clubeId, mandante);
+            return ResponseEntity.ok(retro);
+        } catch (Exception e) {
+            return tratarExcecao(e, HttpStatus.BAD_REQUEST, "Clube inexistente");
+        }
+    }
+
     private ResponseEntity<String> tratarExcecao(Exception e, HttpStatus status, String mensagemPadrao) {
         String mensagem = e instanceof IllegalArgumentException ? e.getMessage() : mensagemPadrao;
         return ResponseEntity.status(status).body("Erro: " + mensagem);

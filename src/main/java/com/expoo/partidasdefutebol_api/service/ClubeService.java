@@ -96,6 +96,32 @@ public class ClubeService {
     }
 
     @Transactional(readOnly = true)
+    public RetroDTO getRetroGoleadas(Long clubeId, Boolean mandante) {
+        Clube clube = buscarClubePorId(clubeId);
+
+        List<Partida> partidas;
+        if (mandante != null) {
+            if (mandante) {
+                partidas = partidaRepository.findByMandanteId(clubeId);
+            } else {
+                partidas = partidaRepository.findByVisitanteId(clubeId);
+            }
+        } else {
+            partidas = buscarPartidasDoClube(clubeId);
+        }
+
+        List<Partida> goleadas = partidas.stream()
+            .filter(p -> {
+                int golsClube = p.getMandante().getId().equals(clubeId) ? p.getGolsMandante() : p.getGolsVisitante();
+                int golsAdversario = p.getMandante().getId().equals(clubeId) ? p.getGolsVisitante() : p.getGolsMandante();
+                return Math.abs(golsClube - golsAdversario) >= 3;
+            })
+            .collect(Collectors.toList());
+
+        return calcularRetro(clube, goleadas);
+    }
+
+    @Transactional(readOnly = true)
     public List<RetroDTO> getRetroAdversarios(Long clubeId) {
         List<Partida> partidas = buscarPartidasDoClube(clubeId);
 
