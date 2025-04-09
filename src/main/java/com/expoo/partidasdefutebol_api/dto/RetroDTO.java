@@ -5,6 +5,7 @@ import java.util.Objects;
 
 @Schema(description = "DTO para representar o retrospecto de um clube")
 public class RetroDTO {
+
     @Schema(description = "Nome do clube", example = "Flamengo")
     private String nome;
 
@@ -35,92 +36,80 @@ public class RetroDTO {
         this.golsSofridos = golsSofridos;
     }
 
-    @Schema(description = "Calcula o saldo de gols (gols feitos - gols sofridos)")
-    public int getSaldoGols() {
-        return golsFeitos - golsSofridos;
-    }
-
-    @Schema(description = "Calcula o total de jogos (vitórias + empates + derrotas)")
-    public int getTotalJogos() {
-        return vitorias + empates + derrotas;
-    }
-
-    @Schema(description = "Calcula os pontos (3 por vitória, 1 por empate)")
-    public int getPontos() {
-        return (vitorias * 3) + empates;
-    }
-
-    @Schema(description = "Obtém o nome do clube")
     public String getNome() {
         return nome;
     }
 
-    @Schema(description = "Define o nome do clube")
     public void setNome(String nome) {
         this.nome = nome;
     }
 
-    @Schema(description = "Obtém o número de vitórias")
     public int getVitorias() {
         return vitorias;
     }
 
-    @Schema(description = "Define o número de vitórias")
     public void setVitorias(int vitorias) {
         this.vitorias = vitorias;
     }
 
-    @Schema(description = "Obtém o número de empates")
     public int getEmpates() {
         return empates;
     }
 
-    @Schema(description = "Define o número de empates")
     public void setEmpates(int empates) {
         this.empates = empates;
     }
 
-    @Schema(description = "Obtém o número de derrotas")
     public int getDerrotas() {
         return derrotas;
     }
 
-    @Schema(description = "Define o número de derrotas")
     public void setDerrotas(int derrotas) {
         this.derrotas = derrotas;
     }
 
-    @Schema(description = "Obtém o número de gols feitos")
     public int getGolsFeitos() {
         return golsFeitos;
     }
 
-    @Schema(description = "Define o número de gols feitos")
     public void setGolsFeitos(int golsFeitos) {
         this.golsFeitos = golsFeitos;
     }
 
-    @Schema(description = "Obtém o número de gols sofridos")
     public int getGolsSofridos() {
         return golsSofridos;
     }
 
-    @Schema(description = "Define o número de gols sofridos")
     public void setGolsSofridos(int golsSofridos) {
         this.golsSofridos = golsSofridos;
+    }
+
+    @Schema(description = "Saldo de gols (gols feitos - sofridos)", example = "10")
+    public int getSaldoGols() {
+        return golsFeitos - golsSofridos;
+    }
+
+    @Schema(description = "Total de jogos disputados", example = "18")
+    public int getTotalJogos() {
+        return vitorias + empates + derrotas;
+    }
+
+    @Schema(description = "Total de pontos (3 por vitória, 1 por empate)", example = "35")
+    public int getPontos() {
+        return (vitorias * 3) + empates;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        RetroDTO retroDTO = (RetroDTO) o;
-        return vitorias == retroDTO.vitorias &&
-               empates == retroDTO.empates &&
-               derrotas == retroDTO.derrotas &&
-               golsFeitos == retroDTO.golsFeitos &&
-               golsSofridos == retroDTO.golsSofridos &&
-               Objects.equals(nome, retroDTO.nome);
+        if (!(o instanceof RetroDTO)) return false;
+        RetroDTO that = (RetroDTO) o;
+        return vitorias == that.vitorias &&
+               empates == that.empates &&
+               derrotas == that.derrotas &&
+               golsFeitos == that.golsFeitos &&
+               golsSofridos == that.golsSofridos &&
+               Objects.equals(nome, that.nome);
     }
 
     @Override

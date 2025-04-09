@@ -2,11 +2,9 @@ package com.expoo.partidasdefutebol_api.dto;
 
 import com.expoo.partidasdefutebol_api.model.Clube;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PastOrPresent;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import java.time.LocalDate;
+import java.util.Objects;
 
 @Schema(description = "DTO para representar um clube de futebol")
 public class ClubeDTO {
@@ -30,7 +28,7 @@ public class ClubeDTO {
     private LocalDate dataCriacao;
 
     @Schema(description = "Indica se o clube está ativo", example = "true")
-    private Boolean ativo;
+    private Boolean ativo = false;
 
     public ClubeDTO() {}
 
@@ -39,14 +37,16 @@ public class ClubeDTO {
         this.nome = nome;
         this.estado = estado;
         this.dataCriacao = dataCriacao;
-        this.ativo = ativo != null ? ativo : false;
+        this.ativo = Boolean.TRUE.equals(ativo);
     }
 
     public Clube toEntity() {
-        return new Clube(this.id, this.nome, this.estado, this.dataCriacao, this.ativo != null ? this.ativo : false);
+        return new Clube(id, nome, estado, dataCriacao, Boolean.TRUE.equals(ativo));
     }
 
     public static ClubeDTO fromEntity(Clube clube) {
+        if (clube == null) return null;
+
         return new ClubeDTO(
             clube.getId(),
             clube.getNome(),
@@ -93,16 +93,34 @@ public class ClubeDTO {
     }
 
     public void setAtivo(Boolean ativo) {
-        this.ativo = ativo;
+        this.ativo = Boolean.TRUE.equals(ativo);
     }
-    
+
     @Override
     public String toString() {
         return "ClubeDTO{" +
-            "nome='" + nome + '\'' +
-            ", estado='" + estado + '\'' +
-            ", ativo=" + ativo +
-            '}';
+                "id=" + id +
+                ", nome='" + nome + '\'' +
+                ", estado='" + estado + '\'' +
+                ", dataCriacao=" + dataCriacao +
+                ", ativo=" + ativo +
+                '}';
     }
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ClubeDTO)) return false;
+        ClubeDTO that = (ClubeDTO) o;
+        return Objects.equals(id, that.id) &&
+               Objects.equals(nome, that.nome) &&
+               Objects.equals(estado, that.estado) &&
+               Objects.equals(dataCriacao, that.dataCriacao) &&
+               Objects.equals(ativo, that.ativo);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, nome, estado, dataCriacao, ativo);
+    }
 }

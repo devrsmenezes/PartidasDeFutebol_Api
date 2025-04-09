@@ -10,19 +10,23 @@ import java.util.Objects;
 public class EstadioDTO {
 
     @Schema(description = "ID do estádio", example = "1")
-    private final Long id;
+    private Long id;
 
     @Schema(description = "Nome do estádio", example = "Maracanã", required = true)
     @NotBlank(message = "O nome do estádio é obrigatório")
     @Size(min = 3, message = "O nome do estádio deve ter pelo menos 3 caracteres")
-    private final String nome;
+    private String nome;
 
-    private EstadioDTO(Long id, String nome) {
+    public EstadioDTO() {
+    }
+
+    public EstadioDTO(Long id, String nome) {
         this.id = id;
         this.nome = nome;
     }
 
     public static EstadioDTO of(Estadio estadio) {
+        if (estadio == null) return null;
         return new EstadioDTO(estadio.getId(), estadio.getNome());
     }
 
@@ -38,21 +42,16 @@ public class EstadioDTO {
         return id;
     }
 
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public String getNome() {
         return nome;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        EstadioDTO that = (EstadioDTO) o;
-        return Objects.equals(id, that.id) && Objects.equals(nome, that.nome);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(id, nome);
+    public void setNome(String nome) {
+        this.nome = nome;
     }
 
     @Override
@@ -61,5 +60,17 @@ public class EstadioDTO {
                 "id=" + id +
                 ", nome='" + nome + '\'' +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof EstadioDTO that)) return false;
+        return Objects.equals(id, that.id) && Objects.equals(nome, that.nome);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, nome);
     }
 }

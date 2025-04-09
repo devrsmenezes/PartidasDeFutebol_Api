@@ -2,6 +2,7 @@ package com.expoo.partidasdefutebol_api.service;
 
 import com.expoo.partidasdefutebol_api.dto.ClubeDTO;
 import com.expoo.partidasdefutebol_api.dto.RetroDTO;
+import com.expoo.partidasdefutebol_api.enums.TipoCampo;
 import com.expoo.partidasdefutebol_api.model.Clube;
 import com.expoo.partidasdefutebol_api.model.Partida;
 import com.expoo.partidasdefutebol_api.repository.ClubeRepository;
@@ -37,19 +38,10 @@ public class ClubeService {
 
     @Transactional
     public ClubeDTO atualizar(Long id, ClubeDTO clubeDTO) {
-        System.out.println("Iniciando atualização do clube ID: " + id);
-        System.out.println("Dados recebidos: " + clubeDTO);
-
         Clube clube = buscarClubePorId(id);
-        System.out.println("Clube antes da atualização: " + clube);
-
         atualizarClubeComDTO(clube, clubeDTO);
-        System.out.println("Clube após atualização de campos: " + clube);
-
         validarClube(clube);
         Clube atualizado = clubeRepository.save(clube);
-        System.out.println("Clube após save: " + atualizado);
-
         return ClubeDTO.fromEntity(atualizado);
     }
 
@@ -71,44 +63,16 @@ public class ClubeService {
     }
 
     @Transactional(readOnly = true)
-    public RetroDTO getRetro(Long clubeId) {
+    public RetroDTO getRetro(Long clubeId, TipoCampo tipoCampo) {
         Clube clube = buscarClubePorId(clubeId);
-        List<Partida> partidas = buscarPartidasDoClube(clubeId);
+        List<Partida> partidas = buscarPartidasPorTipo(clubeId, tipoCampo);
         return calcularRetro(clube, partidas);
     }
 
     @Transactional(readOnly = true)
-    public RetroDTO getRetro(Long clubeId, Boolean mandante) {
+    public RetroDTO getRetroGoleadas(Long clubeId, TipoCampo tipoCampo) {
         Clube clube = buscarClubePorId(clubeId);
-        List<Partida> partidas;
-
-        if (mandante != null) {
-            if (mandante) {
-                partidas = partidaRepository.findByMandanteId(clubeId);
-            } else {
-                partidas = partidaRepository.findByVisitanteId(clubeId);
-            }
-        } else {
-            partidas = buscarPartidasDoClube(clubeId);
-        }
-
-        return calcularRetro(clube, partidas);
-    }
-
-    @Transactional(readOnly = true)
-    public RetroDTO getRetroGoleadas(Long clubeId, Boolean mandante) {
-        Clube clube = buscarClubePorId(clubeId);
-
-        List<Partida> partidas;
-        if (mandante != null) {
-            if (mandante) {
-                partidas = partidaRepository.findByMandanteId(clubeId);
-            } else {
-                partidas = partidaRepository.findByVisitanteId(clubeId);
-            }
-        } else {
-            partidas = buscarPartidasDoClube(clubeId);
-        }
+        List<Partida> partidas = buscarPartidasPorTipo(clubeId, tipoCampo);
 
         List<Partida> goleadas = partidas.stream()
             .filter(p -> {
@@ -122,44 +86,16 @@ public class ClubeService {
     }
 
     @Transactional(readOnly = true)
-    public List<RetroDTO> getRetroAdversarios(Long clubeId) {
-        List<Partida> partidas = buscarPartidasDoClube(clubeId);
-
-        if (partidas.isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        return calcularRetroAdversarios(clubeId, partidas);
-    }
-
-    @Transactional(readOnly = true)
-    public List<RetroDTO> getRetroAdversarios(Long clubeId, Boolean mandante) {
+    public List<RetroDTO> getRetroAdversarios(Long clubeId, TipoCampo tipoCampo) {
         buscarClubePorId(clubeId);
-
-        List<Partida> partidas;
-        if (mandante != null) {
-            if (mandante) {
-                partidas = partidaRepository.findByMandanteId(clubeId);
-            } else {
-                partidas = partidaRepository.findByVisitanteId(clubeId);
-            }
-        } else {
-            partidas = buscarPartidasDoClube(clubeId);
-        }
-
-        if (partidas.isEmpty()) {
-            return new ArrayList<>();
-        }
-
+        List<Partida> partidas = buscarPartidasPorTipo(clubeId, tipoCampo);
+        if (partidas.isEmpty()) return new ArrayList<>();
         return calcularRetroAdversarios(clubeId, partidas);
     }
 
     @Transactional(readOnly = true)
     public List<RetroDTO> compararClubes(List<Long> clubeIds) {
-        List<Clube> clubes = clubeIds.stream()
-            .map(this::buscarClubePorId)
-            .collect(Collectors.toList());
-
+        List<Clube> clubes = clubeIds.stream().map(this::buscarClubePorId).collect(Collectors.toList());
         List<Partida> todasPartidas = buscarPartidasDosClubes(clubeIds);
 
         return clubes.stream()
@@ -181,16 +117,12 @@ public class ClubeService {
             .collect(Collectors.toList());
     }
 
-    private RetroDTO calcularRetroContraAdversario(Clube clube, Long adversarioId, List<Partida> partidas) {
-        Clube adversario = buscarClubePorId(adversarioId);
-        RetroDTO retro = new RetroDTO(adversario.getNome(), 0, 0, 0, 0, 0);
-
-        partidas.stream()
-            .filter(partida -> partida.getMandante().getId().equals(adversarioId) ||
-                               partida.getVisitante().getId().equals(adversarioId))
-            .forEach(partida -> atualizarRetro(retro, partida, clube.getId()));
-
-        return retro;
+    private List<Partida> buscarPartidasPorTipo(Long clubeId, TipoCampo tipoCampo) {
+        return switch (tipoCampo != null ? tipoCampo : TipoCampo.TODOS) {
+            case MANDANTE -> partidaRepository.findByMandanteId(clubeId);
+            case VISITANTE -> partidaRepository.findByVisitanteId(clubeId);
+            case TODOS -> buscarPartidasDoClube(clubeId);
+        };
     }
 
     private Clube buscarClubePorId(Long id) {
@@ -242,6 +174,18 @@ public class ClubeService {
             .filter(partida -> clubeIds.contains(partida.getMandante().getId()) &&
                                clubeIds.contains(partida.getVisitante().getId()))
             .forEach(partida -> atualizarRetro(retro, partida, clube.getId()));
+        return retro;
+    }
+
+    private RetroDTO calcularRetroContraAdversario(Clube clube, Long adversarioId, List<Partida> partidas) {
+        Clube adversario = buscarClubePorId(adversarioId);
+        RetroDTO retro = new RetroDTO(adversario.getNome(), 0, 0, 0, 0, 0);
+
+        partidas.stream()
+            .filter(partida -> partida.getMandante().getId().equals(adversarioId) ||
+                               partida.getVisitante().getId().equals(adversarioId))
+            .forEach(partida -> atualizarRetro(retro, partida, clube.getId()));
+
         return retro;
     }
 

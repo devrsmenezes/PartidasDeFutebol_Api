@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
+
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -14,93 +15,62 @@ public class Partida {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Schema(description = "ID único da partida", example = "1")
     private Long id;
 
-    @ManyToOne
+    @ManyToOne(optional = false)
     @JoinColumn(name = "clube_mandante_id", nullable = false)
-    @NotNull(message = "Clube mandante é obrigatório")
-    @Schema(description = "Clube mandante da partida", requiredMode = Schema.RequiredMode.REQUIRED)
     private Clube mandante;
 
-    @ManyToOne
+    @ManyToOne(optional = false)
     @JoinColumn(name = "clube_visitante_id", nullable = false)
-    @NotNull(message = "Clube visitante é obrigatório")
-    @Schema(description = "Clube visitante da partida", requiredMode = Schema.RequiredMode.REQUIRED)
     private Clube visitante;
 
-    @NotNull(message = "Resultado é obrigatório")
-    @Schema(description = "Resultado da partida", example = "2-1", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotNull
+    @Column(nullable = false)
     private String resultado;
 
-    @NotNull(message = "Estádio é obrigatório")
-    @Schema(description = "Nome do estádio onde a partida foi realizada", example = "Maracanã", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotNull
+    @Column(nullable = false)
     private String estadio;
 
-    @NotNull(message = "Data e hora são obrigatórias")
-    @PastOrPresent(message = "Data e hora não podem estar no futuro")
-    @Schema(description = "Data e hora da partida", example = "2023-05-20T15:00:00", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotNull
+    @PastOrPresent
+    @Column(nullable = false)
     private LocalDateTime dataHora;
 
-    @Schema(description = "Número de gols marcados pelo clube mandante", example = "2")
     private int golsMandante;
-
-    @Schema(description = "Número de gols marcados pelo clube visitante", example = "1")
     private int golsVisitante;
-    
-    public Partida() {}
 
-    public Partida(Clube mandante, Clube visitante, String resultado, String estadio, LocalDateTime dataHora) {
-        this.mandante = mandante;
-        this.visitante = visitante;
-        this.resultado = resultado;
-        this.estadio = estadio;
-        this.dataHora = dataHora;
-        
-        extrairGolsDoResultado(resultado);
-    }
-    
+    public Partida() {}
 
     public Partida(Clube mandante, Clube visitante, int golsMandante, int golsVisitante, String estadio, LocalDateTime dataHora) {
         this.mandante = mandante;
         this.visitante = visitante;
         this.golsMandante = golsMandante;
         this.golsVisitante = golsVisitante;
-        this.resultado = golsMandante + "-" + golsVisitante;
         this.estadio = estadio;
         this.dataHora = dataHora;
+        atualizarResultado();
     }
 
+    @Schema(description = "ID único da partida", example = "1")
     public Long getId() {
         return id;
     }
 
+    @Schema(description = "Clube mandante da partida", requiredMode = Schema.RequiredMode.REQUIRED)
     public Clube getMandante() {
         return mandante;
     }
 
+    @Schema(description = "Clube visitante da partida", requiredMode = Schema.RequiredMode.REQUIRED)
     public Clube getVisitante() {
         return visitante;
     }
 
+    @Schema(description = "Resultado da partida", example = "2-1", requiredMode = Schema.RequiredMode.REQUIRED)
     public String getResultado() {
         return resultado;
-    }
-
-    public String getEstadio() {
-        return estadio;
-    }
-
-    public LocalDateTime getDataHora() {
-        return dataHora;
-    }
-
-    public int getGolsMandante() {
-        return golsMandante;
-    }
-
-    public int getGolsVisitante() {
-        return golsVisitante;
     }
 
     public void setResultado(String resultado) {
@@ -108,12 +78,27 @@ public class Partida {
         extrairGolsDoResultado(resultado);
     }
 
+    @Schema(description = "Nome do estádio onde a partida foi realizada", example = "Maracanã", requiredMode = Schema.RequiredMode.REQUIRED)
+    public String getEstadio() {
+        return estadio;
+    }
+
     public void setEstadio(String estadio) {
         this.estadio = estadio;
     }
 
+    @Schema(description = "Data e hora da partida", example = "2023-05-20T15:00:00", requiredMode = Schema.RequiredMode.REQUIRED)
+    public LocalDateTime getDataHora() {
+        return dataHora;
+    }
+
     public void setDataHora(LocalDateTime dataHora) {
         this.dataHora = dataHora;
+    }
+
+    @Schema(description = "Número de gols marcados pelo clube mandante", example = "2")
+    public int getGolsMandante() {
+        return golsMandante;
     }
 
     public void setGolsMandante(int golsMandante) {
@@ -121,11 +106,19 @@ public class Partida {
         atualizarResultado();
     }
 
+    @Schema(description = "Número de gols marcados pelo clube visitante", example = "1")
+    public int getGolsVisitante() {
+        return golsVisitante;
+    }
+
     public void setGolsVisitante(int golsVisitante) {
         this.golsVisitante = golsVisitante;
         atualizarResultado();
     }
-    
+
+    private void atualizarResultado() {
+        this.resultado = this.golsMandante + "-" + this.golsVisitante;
+    }
 
     private void extrairGolsDoResultado(String resultado) {
         if (resultado != null && resultado.contains("-")) {
@@ -135,21 +128,18 @@ public class Partida {
                     this.golsMandante = Integer.parseInt(gols[0]);
                     this.golsVisitante = Integer.parseInt(gols[1]);
                 } catch (NumberFormatException e) {
-
+                    throw new IllegalArgumentException("Formato inválido para resultado: " + resultado);
                 }
+            } else {
+                throw new IllegalArgumentException("Resultado deve estar no formato 'X-Y'");
             }
         }
-    }
-    
-    private void atualizarResultado() {
-        this.resultado = this.golsMandante + "-" + this.golsVisitante;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Partida partida = (Partida) o;
+        if (!(o instanceof Partida partida)) return false;
         return Objects.equals(id, partida.id);
     }
 

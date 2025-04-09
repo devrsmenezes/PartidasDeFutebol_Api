@@ -1,9 +1,9 @@
 package com.expoo.partidasdefutebol_api.model;
 
-import com.expoo.partidasdefutebol_api.dto.ClubeDTO;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;
+
 import java.time.LocalDate;
 import java.util.Objects;
 
@@ -38,7 +38,13 @@ public class Clube {
     @Schema(description = "Indica se o clube está ativo", example = "true", required = true)
     private boolean ativo;
 
-    public Clube() {
+    public Clube() {}
+
+    public Clube(String nome, String estado, LocalDate dataCriacao, boolean ativo) {
+        this.nome = nome;
+        this.estado = estado;
+        this.dataCriacao = dataCriacao;
+        this.ativo = ativo;
     }
 
     public Clube(Long id, String nome, String estado, LocalDate dataCriacao, boolean ativo) {
@@ -47,35 +53,6 @@ public class Clube {
         this.estado = estado;
         this.dataCriacao = dataCriacao;
         this.ativo = ativo;
-    }
-
-    public Clube(ClubeDTO clubeDTO) {
-        this.id = clubeDTO.getId();
-        this.nome = clubeDTO.getNome();
-        this.estado = clubeDTO.getEstado();
-        this.dataCriacao = clubeDTO.getDataCriacao();
-        this.ativo = clubeDTO.getAtivo() != null ? clubeDTO.getAtivo() : false;
-    }
-
-    public ClubeDTO toDTO() {
-        return new ClubeDTO(
-            this.id,
-            this.nome,
-            this.estado,
-            this.dataCriacao,
-            this.ativo
-        );
-    }
-
-
-    public static Clube fromDTO(ClubeDTO dto) {
-        return new Clube(
-            dto.getId(),
-            dto.getNome(),
-            dto.getEstado(),
-            dto.getDataCriacao(),
-            dto.getAtivo() != null ? dto.getAtivo() : false
-        );
     }
 
     public Long getId() {
@@ -121,8 +98,7 @@ public class Clube {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Clube clube = (Clube) o;
+        if (!(o instanceof Clube clube)) return false;
         return Objects.equals(id, clube.id);
     }
 
@@ -134,11 +110,11 @@ public class Clube {
     @Override
     public String toString() {
         return "Clube{" +
-                "id=" + id +
-                ", nome='" + nome + '\'' +
-                ", estado='" + estado + '\'' +
-                ", dataCriacao=" + dataCriacao +
-                ", ativo=" + ativo +
-                '}';
+               "id=" + id +
+               ", nome='" + nome + '\'' +
+               ", estado='" + estado + '\'' +
+               ", dataCriacao=" + dataCriacao +
+               ", ativo=" + ativo +
+               '}';
     }
 }

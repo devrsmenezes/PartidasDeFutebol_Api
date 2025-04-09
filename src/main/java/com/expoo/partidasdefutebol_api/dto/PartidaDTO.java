@@ -9,12 +9,6 @@ import java.util.Objects;
 @Schema(description = "DTO para representar uma partida de futebol")
 public class PartidaDTO {
 
-    @Schema(description = "Nome do time mandante", example = "Time A")
-    private String mandanteNome;
-
-    @Schema(description = "Nome do time visitante", example = "Time B")
-    private String visitanteNome;
-
     @Schema(description = "ID da partida", example = "1")
     private Long id;
 
@@ -25,6 +19,12 @@ public class PartidaDTO {
     @Schema(description = "ID do clube visitante", example = "2", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull(message = "ID do clube visitante é obrigatório")
     private Long visitanteId;
+
+    @Schema(description = "Nome do time mandante", example = "Time A")
+    private String mandanteNome;
+
+    @Schema(description = "Nome do time visitante", example = "Time B")
+    private String visitanteNome;
 
     @Schema(description = "Resultado da partida", example = "2-1", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull(message = "Resultado é obrigatório")
@@ -48,26 +48,39 @@ public class PartidaDTO {
     public PartidaDTO() {
     }
 
-    public PartidaDTO(Long mandanteId, Long visitanteId, int golsMandante, int golsVisitante, String estadio, LocalDateTime dataHora) {
+    public PartidaDTO(Long id, Long mandanteId, Long visitanteId, int golsMandante, int golsVisitante, String estadio, LocalDateTime dataHora) {
+        this.id = id;
         this.mandanteId = mandanteId;
-        this.mandanteNome = buscarNomeDoTime(mandanteId);
         this.visitanteId = visitanteId;
-        this.visitanteNome = buscarNomeDoTime(visitanteId);
         this.golsMandante = golsMandante;
         this.golsVisitante = golsVisitante;
+        this.resultado = formatarResultado(golsMandante, golsVisitante);
         this.estadio = estadio;
         this.dataHora = dataHora;
-        atualizarResultado();
     }
 
-    public PartidaDTO(Long mandanteId, Long visitanteId, String resultado, String estadio, LocalDateTime dataHora) {
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Long getMandanteId() {
+        return mandanteId;
+    }
+
+    public void setMandanteId(Long mandanteId) {
         this.mandanteId = mandanteId;
-        this.mandanteNome = buscarNomeDoTime(mandanteId);
+    }
+
+    public Long getVisitanteId() {
+        return visitanteId;
+    }
+
+    public void setVisitanteId(Long visitanteId) {
         this.visitanteId = visitanteId;
-        this.visitanteNome = buscarNomeDoTime(visitanteId);
-        this.estadio = estadio;
-        this.dataHora = dataHora;
-        setResultado(resultado);
     }
 
     public String getMandanteNome() {
@@ -86,49 +99,23 @@ public class PartidaDTO {
         this.visitanteNome = visitanteNome;
     }
 
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Long getMandanteId() {
-        return mandanteId;
-    }
-
-    public void setMandanteId(Long mandanteId) {
-        this.mandanteId = mandanteId;
-        this.mandanteNome = buscarNomeDoTime(mandanteId);
-    }
-
-    public Long getVisitanteId() {
-        return visitanteId;
-    }
-
-    public void setVisitanteId(Long visitanteId) {
-        this.visitanteId = visitanteId;
-        this.visitanteNome = buscarNomeDoTime(visitanteId);
-    }
-
     public String getResultado() {
         return resultado;
     }
 
     public void setResultado(String resultado) {
         this.resultado = resultado;
-
         String[] gols = resultado.split("-");
+
         if (gols.length == 2) {
             try {
                 this.golsMandante = Integer.parseInt(gols[0]);
                 this.golsVisitante = Integer.parseInt(gols[1]);
             } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("Formato de resultado inválido");
+                throw new IllegalArgumentException("Formato de resultado inválido: " + resultado);
             }
         } else {
-            throw new IllegalArgumentException("Formato de resultado inválido");
+            throw new IllegalArgumentException("Formato de resultado inválido: " + resultado);
         }
     }
 
@@ -166,27 +153,24 @@ public class PartidaDTO {
         atualizarResultado();
     }
 
-    private String buscarNomeDoTime(Long timeId) {
-        if (timeId == 1) return "Time A";
-        else if (timeId == 2) return "Time B";
-        else return "Time Desconhecido";
+    private void atualizarResultado() {
+        this.resultado = formatarResultado(this.golsMandante, this.golsVisitante);
     }
 
-    private void atualizarResultado() {
-        this.resultado = golsMandante + "-" + golsVisitante;
+    private String formatarResultado(int golsMandante, int golsVisitante) {
+        return golsMandante + "-" + golsVisitante;
     }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        PartidaDTO that = (PartidaDTO) o;
+        if (!(o instanceof PartidaDTO that)) return false;
         return golsMandante == that.golsMandante &&
                golsVisitante == that.golsVisitante &&
                Objects.equals(id, that.id) &&
                Objects.equals(mandanteId, that.mandanteId) &&
-               Objects.equals(mandanteNome, that.mandanteNome) &&
                Objects.equals(visitanteId, that.visitanteId) &&
+               Objects.equals(mandanteNome, that.mandanteNome) &&
                Objects.equals(visitanteNome, that.visitanteNome) &&
                Objects.equals(resultado, that.resultado) &&
                Objects.equals(estadio, that.estadio) &&
@@ -195,17 +179,17 @@ public class PartidaDTO {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, mandanteId, mandanteNome, visitanteId, visitanteNome, resultado, estadio, dataHora, golsMandante, golsVisitante);
+        return Objects.hash(id, mandanteId, visitanteId, mandanteNome, visitanteNome, resultado, estadio, dataHora, golsMandante, golsVisitante);
     }
 
     @Override
     public String toString() {
         return "PartidaDTO{" +
                "id=" + id +
-               ", mandanteNome='" + mandanteNome + '\'' +
                ", mandanteId=" + mandanteId +
-               ", visitanteNome='" + visitanteNome + '\'' +
+               ", mandanteNome='" + mandanteNome + '\'' +
                ", visitanteId=" + visitanteId +
+               ", visitanteNome='" + visitanteNome + '\'' +
                ", resultado='" + resultado + '\'' +
                ", estadio='" + estadio + '\'' +
                ", dataHora=" + dataHora +
