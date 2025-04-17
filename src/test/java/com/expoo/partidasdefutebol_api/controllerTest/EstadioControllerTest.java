@@ -11,12 +11,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.data.domain.*;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -32,6 +33,7 @@ class EstadioControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
+
     @Test
     @DisplayName("POST /estadio - Deve cadastrar estádio com sucesso")
     void deveCadastrarEstadioComSucesso() throws Exception {
@@ -46,6 +48,17 @@ class EstadioControllerTest {
             .andExpect(status().isCreated())
             .andExpect(jsonPath("$.id").value(1L))
             .andExpect(jsonPath("$.nome").value("Maracanã"));
+    }
+
+    @Test
+    @DisplayName("POST /estadio - Deve retornar 400 ao enviar nome vazio")
+    void deveRetornar400ComNomeInvalido() throws Exception {
+        EstadioDTO dto = new EstadioDTO(null, ""); 
+
+        mockMvc.perform(post("/estadio")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
+            .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -87,10 +100,40 @@ class EstadioControllerTest {
     @DisplayName("GET /estadio/{id} - Deve retornar 404 quando estádio não encontrado")
     void deveLancarErro404QuandoEstadioNaoExiste() throws Exception {
         Mockito.when(estadioService.buscar(anyLong()))
-            .thenThrow(new org.springframework.web.server.ResponseStatusException(
-                org.springframework.http.HttpStatus.NOT_FOUND, "Estádio não encontrado"));
+            .thenThrow(new ResponseStatusException(
+                HttpStatus.NOT_FOUND, "Estádio não encontrado"));
 
         mockMvc.perform(get("/estadio/999"))
+            .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("PUT /estadio/{id} - Deve atualizar estádio com sucesso")
+    void deveAtualizarEstadioComSucesso() throws Exception {
+        EstadioDTO entrada = new EstadioDTO(null, "Allianz Parque");
+        EstadioDTO saida = new EstadioDTO(1L, "Allianz Parque");
+
+        Mockito.when(estadioService.editar(eq(1L), any(EstadioDTO.class))).thenReturn(saida);
+
+        mockMvc.perform(put("/estadio/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(entrada)))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.id").value(1L))
+            .andExpect(jsonPath("$.nome").value("Allianz Parque"));
+    }
+
+    @Test
+    @DisplayName("PUT /estadio/{id} - Deve retornar 404 quando estádio não encontrado")
+    void deveRetornar404AoAtualizarEstadioInexistente() throws Exception {
+        EstadioDTO dto = new EstadioDTO(null, "Estádio Inexistente");
+
+        Mockito.when(estadioService.editar(eq(999L), any(EstadioDTO.class)))
+            .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Estádio não encontrado"));
+
+        mockMvc.perform(put("/estadio/999")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
             .andExpect(status().isNotFound());
     }
 }
