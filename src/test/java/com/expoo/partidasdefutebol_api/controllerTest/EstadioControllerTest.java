@@ -33,7 +33,6 @@ class EstadioControllerTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-
     @Test
     @DisplayName("POST /estadio - Deve cadastrar estádio com sucesso")
     void deveCadastrarEstadioComSucesso() throws Exception {
@@ -53,7 +52,7 @@ class EstadioControllerTest {
     @Test
     @DisplayName("POST /estadio - Deve retornar 400 ao enviar nome vazio")
     void deveRetornar400ComNomeInvalido() throws Exception {
-        EstadioDTO dto = new EstadioDTO(null, ""); 
+        EstadioDTO dto = new EstadioDTO(null, "");
 
         mockMvc.perform(post("/estadio")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -64,21 +63,21 @@ class EstadioControllerTest {
     @Test
     @DisplayName("GET /estadio/{id} - Deve retornar estádio existente")
     void deveBuscarEstadioPorId() throws Exception {
-        EstadioDTO dto = new EstadioDTO(1L, "Castelão");
+        EstadioDTO dto = new EstadioDTO(1L, "Arena Neo Química");
 
         Mockito.when(estadioService.buscar(1L)).thenReturn(dto);
 
         mockMvc.perform(get("/estadio/1"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(1L))
-            .andExpect(jsonPath("$.nome").value("Castelão"));
+            .andExpect(jsonPath("$.nome").value("Arena Neo Química"));
     }
 
     @Test
     @DisplayName("GET /estadio - Deve retornar lista paginada de estádios")
     void deveListarEstadios() throws Exception {
         List<EstadioDTO> lista = List.of(
-            new EstadioDTO(1L, "Beira-Rio"),
+            new EstadioDTO(1L, "Pacaembu"),
             new EstadioDTO(2L, "Mineirão")
         );
         Page<EstadioDTO> page = new PageImpl<>(lista);
@@ -92,7 +91,7 @@ class EstadioControllerTest {
                 .param("direcao", "asc"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.content.length()").value(2))
-            .andExpect(jsonPath("$.content[0].nome").value("Beira-Rio"))
+            .andExpect(jsonPath("$.content[0].nome").value("Pacaembu"))
             .andExpect(jsonPath("$.content[1].nome").value("Mineirão"));
     }
 
@@ -100,8 +99,7 @@ class EstadioControllerTest {
     @DisplayName("GET /estadio/{id} - Deve retornar 404 quando estádio não encontrado")
     void deveLancarErro404QuandoEstadioNaoExiste() throws Exception {
         Mockito.when(estadioService.buscar(anyLong()))
-            .thenThrow(new ResponseStatusException(
-                HttpStatus.NOT_FOUND, "Estádio não encontrado"));
+            .thenThrow(new ResponseStatusException(HttpStatus.NOT_FOUND, "Estádio não encontrado"));
 
         mockMvc.perform(get("/estadio/999"))
             .andExpect(status().isNotFound());
@@ -110,8 +108,8 @@ class EstadioControllerTest {
     @Test
     @DisplayName("PUT /estadio/{id} - Deve atualizar estádio com sucesso")
     void deveAtualizarEstadioComSucesso() throws Exception {
-        EstadioDTO entrada = new EstadioDTO(null, "Allianz Parque");
-        EstadioDTO saida = new EstadioDTO(1L, "Allianz Parque");
+        EstadioDTO entrada = new EstadioDTO(null, "Palestra Itália");
+        EstadioDTO saida = new EstadioDTO(1L, "Palestra Itália");
 
         Mockito.when(estadioService.editar(eq(1L), any(EstadioDTO.class))).thenReturn(saida);
 
@@ -120,7 +118,7 @@ class EstadioControllerTest {
                 .content(objectMapper.writeValueAsString(entrada)))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(1L))
-            .andExpect(jsonPath("$.nome").value("Allianz Parque"));
+            .andExpect(jsonPath("$.nome").value("Palestra Itália"));
     }
 
     @Test
@@ -135,5 +133,27 @@ class EstadioControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(dto)))
             .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("PUT /estadio/{id} - Deve retornar 400 ao atualizar com nome vazio")
+    void deveRetornar400AoAtualizarComNomeVazio() throws Exception {
+        EstadioDTO dto = new EstadioDTO(null, "");
+
+        mockMvc.perform(put("/estadio/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("PUT /estadio/{id} - Deve retornar 400 ao atualizar com nome muito curto")
+    void deveRetornar400AoAtualizarComNomeMuitoCurto() throws Exception {
+        EstadioDTO dto = new EstadioDTO(null, "A");
+
+        mockMvc.perform(put("/estadio/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
+            .andExpect(status().isBadRequest());
     }
 }

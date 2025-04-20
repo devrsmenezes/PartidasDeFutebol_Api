@@ -26,7 +26,7 @@ class EstadioDTOTest {
     @Test
     @DisplayName("Deve converter entidade para DTO corretamente")
     void deveConverterEntidadeParaDTO() {
-        Estadio estadio = new Estadio("Morumbi");
+        Estadio estadio = new Estadio("Arena Neo Química");
         estadio.setId(10L);
 
         EstadioDTO dto = EstadioDTO.of(estadio);
@@ -48,10 +48,10 @@ class EstadioDTOTest {
     @Test
     @DisplayName("Deve criar DTO com apenas o nome")
     void deveCriarDTOComNome() {
-        EstadioDTO dto = EstadioDTO.of("Arena Fonte Nova");
+        EstadioDTO dto = EstadioDTO.of("Pacaembu");
 
         assertNull(dto.getId());
-        assertEquals("Arena Fonte Nova", dto.getNome());
+        assertEquals("Pacaembu", dto.getNome());
     }
 
     @Test
@@ -81,8 +81,8 @@ class EstadioDTOTest {
     @Test
     @DisplayName("Deve considerar DTOs com mesmo ID e nome como iguais")
     void deveCompararDTOsIguais() {
-        EstadioDTO dto1 = new EstadioDTO(1L, "Beira-Rio");
-        EstadioDTO dto2 = new EstadioDTO(1L, "Beira-Rio");
+        EstadioDTO dto1 = new EstadioDTO(1L, "Palestra Itália");
+        EstadioDTO dto2 = new EstadioDTO(1L, "Palestra Itália");
 
         assertEquals(dto1, dto2);
         assertEquals(dto1.hashCode(), dto2.hashCode());
@@ -91,11 +91,31 @@ class EstadioDTOTest {
     @Test
     @DisplayName("Deve gerar toString com ID e nome")
     void deveGerarToStringCorretamente() {
-        EstadioDTO dto = new EstadioDTO(1L, "Castelão");
+        EstadioDTO dto = new EstadioDTO(1L, "Maracanã");
 
         String toString = dto.toString();
 
         assertTrue(toString.contains("1"));
-        assertTrue(toString.contains("Castelão"));
+        assertTrue(toString.contains("Maracanã"));
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção se nome estiver em branco via validarCampos()")
+    void deveLancarExcecaoSeNomeEmBrancoManual() {
+        EstadioDTO dto = new EstadioDTO(1L, "  ");
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, dto::validarCampos);
+
+        assertEquals("O nome do estádio é obrigatório", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção se nome tiver menos de 3 caracteres via validarCampos()")
+    void deveLancarExcecaoSeNomeMuitoCurtoManual() {
+        EstadioDTO dto = new EstadioDTO(1L, "AB");
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, dto::validarCampos);
+
+        assertEquals("O nome do estádio deve ter pelo menos 3 caracteres", ex.getMessage());
     }
 }

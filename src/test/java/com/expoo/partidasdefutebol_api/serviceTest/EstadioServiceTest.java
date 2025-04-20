@@ -27,16 +27,16 @@ class EstadioServiceTest {
 
     @Test
     void deveCadastrarEstadioComNomeValido() {
-        EstadioDTO dto = new EstadioDTO(null, "Arena Corinthians");
-        Estadio salvo = new Estadio(1L, "Arena Corinthians");
+        EstadioDTO dto = new EstadioDTO(null, "Arena Neo Química");
+        Estadio salvo = new Estadio(1L, "Arena Neo Química");
 
-        when(estadioRepository.existsByNomeAndIdNot("Arena Corinthians", -1L)).thenReturn(false);
+        when(estadioRepository.existsByNomeAndIdNot("Arena Neo Química", -1L)).thenReturn(false);
         when(estadioRepository.save(any())).thenReturn(salvo);
 
         EstadioDTO resultado = estadioService.cadastrar(dto);
 
         assertNotNull(resultado);
-        assertEquals("Arena Corinthians", resultado.getNome());
+        assertEquals("Arena Neo Química", resultado.getNome());
     }
 
     @Test
@@ -57,52 +57,52 @@ class EstadioServiceTest {
 
     @Test
     void deveLancarExcecaoQuandoNomeDuplicadoNoCadastro() {
-        EstadioDTO dto = new EstadioDTO(null, "Beira-Rio");
+        EstadioDTO dto = new EstadioDTO(null, "Maracanã");
 
-        when(estadioRepository.existsByNomeAndIdNot("Beira-Rio", -1L)).thenReturn(true);
+        when(estadioRepository.existsByNomeAndIdNot("Maracanã", -1L)).thenReturn(true);
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> estadioService.cadastrar(dto));
-        assertEquals("409 CONFLICT \"Já existe um estádio com o nome: Beira-Rio\"", ex.getMessage());
+        assertEquals("409 CONFLICT \"Já existe um estádio com o nome: Maracanã\"", ex.getMessage());
     }
 
     @Test
     void deveEditarEstadioComSucesso() {
         Long id = 1L;
-        EstadioDTO dto = new EstadioDTO(id, "Allianz Parque");
-        Estadio existente = new Estadio(id, "Palestra Itália");
+        EstadioDTO dto = new EstadioDTO(id, "Mineirão");
+        Estadio existente = new Estadio(id, "Velho Nome");
 
         when(estadioRepository.findById(id)).thenReturn(Optional.of(existente));
-        when(estadioRepository.existsByNomeAndIdNot(dto.getNome(), id)).thenReturn(false);
-        when(estadioRepository.save(any())).thenReturn(new Estadio(id, dto.getNome()));
+        when(estadioRepository.existsByNomeAndIdNot("Mineirão", id)).thenReturn(false);
+        when(estadioRepository.save(any())).thenReturn(new Estadio(id, "Mineirão"));
 
         EstadioDTO resultado = estadioService.editar(id, dto);
 
-        assertEquals("Allianz Parque", resultado.getNome());
+        assertEquals("Mineirão", resultado.getNome());
     }
 
     @Test
     void deveLancarExcecaoQuandoNomeDuplicadoNaEdicao() {
         Long id = 1L;
-        EstadioDTO dto = new EstadioDTO(id, "Beira-Rio");
-        Estadio existente = new Estadio(id, "Velho Nome");
+        EstadioDTO dto = new EstadioDTO(id, "Pacaembu");
+        Estadio existente = new Estadio(id, "Outro Nome");
 
         when(estadioRepository.findById(id)).thenReturn(Optional.of(existente));
-        when(estadioRepository.existsByNomeAndIdNot("Beira-Rio", id)).thenReturn(true);
+        when(estadioRepository.existsByNomeAndIdNot("Pacaembu", id)).thenReturn(true);
 
         ResponseStatusException ex = assertThrows(ResponseStatusException.class, () -> estadioService.editar(id, dto));
-        assertEquals("409 CONFLICT \"Já existe um estádio com o nome: Beira-Rio\"", ex.getMessage());
+        assertEquals("409 CONFLICT \"Já existe um estádio com o nome: Pacaembu\"", ex.getMessage());
     }
 
     @Test
     void deveBuscarEstadioPorIdComSucesso() {
         Long id = 10L;
-        Estadio estadio = new Estadio(id, "Castelão");
+        Estadio estadio = new Estadio(id, "Palestra Itália");
 
         when(estadioRepository.findById(id)).thenReturn(Optional.of(estadio));
 
         EstadioDTO resultado = estadioService.buscar(id);
 
-        assertEquals("Castelão", resultado.getNome());
+        assertEquals("Palestra Itália", resultado.getNome());
     }
 
     @Test
@@ -118,8 +118,8 @@ class EstadioServiceTest {
     void deveListarEstadiosPaginados() {
         Pageable pageable = PageRequest.of(0, 2, Sort.by("nome"));
         Page<Estadio> page = new PageImpl<>(List.of(
-            new Estadio(1L, "Maracanã"),
-            new Estadio(2L, "Mineirão")
+            new Estadio(1L, "Arena Neo Química"),
+            new Estadio(2L, "Maracanã")
         ));
 
         when(estadioRepository.findAll(pageable)).thenReturn(page);
@@ -127,7 +127,7 @@ class EstadioServiceTest {
         Page<EstadioDTO> resultado = estadioService.listar(pageable);
 
         assertEquals(2, resultado.getContent().size());
-        assertEquals("Maracanã", resultado.getContent().get(0).getNome());
-        assertEquals("Mineirão", resultado.getContent().get(1).getNome());
+        assertEquals("Arena Neo Química", resultado.getContent().get(0).getNome());
+        assertEquals("Maracanã", resultado.getContent().get(1).getNome());
     }
 }
