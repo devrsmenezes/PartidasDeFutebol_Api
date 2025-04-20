@@ -14,7 +14,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-class EstadioServiceTest {
+public class EstadioServiceTest {
 
     private EstadioRepository estadioRepository;
     private EstadioService estadioService;

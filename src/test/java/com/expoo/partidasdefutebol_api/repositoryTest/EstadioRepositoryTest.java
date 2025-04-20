@@ -13,7 +13,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
 @ActiveProfiles("test")
-class EstadioRepositoryTest {
+public class EstadioRepositoryTest {
 
     @Autowired
     private EstadioRepository estadioRepository;

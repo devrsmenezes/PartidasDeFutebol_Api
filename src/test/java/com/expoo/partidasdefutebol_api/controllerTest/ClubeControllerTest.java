@@ -47,16 +47,16 @@ public class ClubeControllerTest {
     }
 
     @Test
-    void atualizarClube_comDadosValidos() throws Exception {    
-    ClubeDTO dto = new ClubeDTO(1L, "NeoCampers Atualizado", "SP", LocalDate.of(2020, 1, 1), true);
-    when(clubeService.atualizar(eq(1L), any(ClubeDTO.class))).thenReturn(dto);
+    void atualizarClube_comDadosValidos() throws Exception {
+        ClubeDTO dto = new ClubeDTO(1L, "NeoCampers Atualizado", "SP", LocalDate.of(2020, 1, 1), true);
+        when(clubeService.atualizar(eq(1L), any(ClubeDTO.class))).thenReturn(dto);
 
-    mockMvc.perform(put(BASE_URL + "/1")
-                    .contentType(MediaType.APPLICATION_JSON)
-                    .content(objectMapper.writeValueAsString(dto)))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.nome").value("NeoCampers Atualizado"))
-            .andExpect(jsonPath("$.dataCriacao").value("2020-01-01"));
+        mockMvc.perform(put(BASE_URL + "/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nome").value("NeoCampers Atualizado"))
+                .andExpect(jsonPath("$.dataCriacao").value("2020-01-01"));
     }
 
     @Test
@@ -91,8 +91,7 @@ public class ClubeControllerTest {
 
     @Test
     void clubeNaoEncontrado() throws Exception {
-        when(clubeService.buscar(99L))
-                .thenThrow(new RuntimeException("Clube não encontrado"));
+        when(clubeService.buscar(99L)).thenThrow(new RuntimeException("Clube não encontrado"));
 
         mockMvc.perform(get(BASE_URL + "/99"))
                 .andExpect(status().is5xxServerError());
@@ -100,12 +99,32 @@ public class ClubeControllerTest {
 
     @Test
     void getRetro() throws Exception {
-    RetroDTO retro = new RetroDTO("Botafogo", 2, 0, 1, 4, 2);
-    when(clubeService.getRetro(eq(1L), eq(TipoCampo.MANDANTE)))
-            .thenReturn(retro);
+        RetroDTO retro = new RetroDTO("Botafogo", 2, 0, 1, 4, 2);
+        when(clubeService.getRetro(eq(1L), eq(TipoCampo.MANDANTE))).thenReturn(retro);
 
-    mockMvc.perform(get("/clube/1/retro?mandante=true"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.nome").value("Botafogo"));
+        mockMvc.perform(get(BASE_URL + "/1/retro?mandante=true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nome").value("Botafogo"));
+    }
+
+    @Test
+    void getRetroAdversarios() throws Exception {
+        RetroDTO retro = new RetroDTO("NeoClube", 2, 1, 0, 5, 2);
+        when(clubeService.getRetroAdversarios(eq(9L), eq(TipoCampo.TODOS)))
+                .thenReturn(List.of(retro));
+
+        mockMvc.perform(get(BASE_URL + "/9/retro-adversarios"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].nome").value("NeoClube"));
+    }
+
+    @Test
+    void getRetroGoleadas() throws Exception {
+        RetroDTO retro = new RetroDTO("MeliClube", 1, 0, 0, 4, 0);
+        when(clubeService.getRetroGoleadas(eq(9L), eq(TipoCampo.MANDANTE))).thenReturn(retro);
+
+        mockMvc.perform(get(BASE_URL + "/9/retro-goleadas?mandante=true"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.nome").value("MeliClube"));
     }
 }

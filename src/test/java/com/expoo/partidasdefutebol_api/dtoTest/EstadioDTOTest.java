@@ -13,7 +13,7 @@ import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class EstadioDTOTest {
+public class EstadioDTOTest {
 
     private static Validator validator;
 
