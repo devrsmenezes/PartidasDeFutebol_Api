@@ -4,7 +4,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PastOrPresent;
-
 import java.time.LocalDateTime;
 import java.util.Objects;
 
@@ -43,14 +42,14 @@ public class Partida {
 
     public Partida() {}
 
-    public Partida(Clube mandante, Clube visitante, int golsMandante, int golsVisitante, String estadio, LocalDateTime dataHora) {
+    public Partida(Long id, Clube mandante, Clube visitante, int golsMandante, int golsVisitante, LocalDateTime dataHora) {
+        this.id = id;
         this.mandante = mandante;
         this.visitante = visitante;
         this.golsMandante = golsMandante;
         this.golsVisitante = golsVisitante;
-        this.estadio = estadio;
         this.dataHora = dataHora;
-        atualizarResultado();
+        this.resultado = golsMandante + "-" + golsVisitante;
     }
 
     @Schema(description = "ID único da partida", example = "1")

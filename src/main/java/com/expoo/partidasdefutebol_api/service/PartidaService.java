@@ -32,7 +32,13 @@ public class PartidaService {
 
     @Transactional
     public Partida cadastrar(PartidaDTO dto) {
-        Partida partida = converterParaPartida(dto);
+        Clube mandante = buscarClubePorId(dto.getMandanteId(), "Clube mandante não encontrado");
+        Clube visitante = buscarClubePorId(dto.getVisitanteId(), "Clube visitante não encontrado");
+
+        Partida partida = new Partida(null, mandante, visitante, dto.getGolsMandante(), dto.getGolsVisitante(), dto.getDataHora());
+        partida.setEstadio(dto.getEstadio());
+        partida.setResultado(dto.getResultado());
+
         validar(partida, null);
         return partidaRepository.save(partida);
     }
@@ -40,7 +46,12 @@ public class PartidaService {
     @Transactional
     public Partida atualizar(Long id, PartidaDTO dto) {
         Partida partida = buscarPartidaPorId(id);
-        atualizarPartida(partida, dto);
+        partida.setGolsMandante(dto.getGolsMandante());
+        partida.setGolsVisitante(dto.getGolsVisitante());
+        partida.setResultado(dto.getResultado());
+        partida.setEstadio(dto.getEstadio());
+        partida.setDataHora(dto.getDataHora());
+
         validar(partida, id);
         return partidaRepository.save(partida);
     }
@@ -62,8 +73,8 @@ public class PartidaService {
 
         if (Boolean.TRUE.equals(goleadas)) {
             List<Partida> filtradas = partidas.stream()
-                .filter(p -> Math.abs(p.getGolsMandante() - p.getGolsVisitante()) >= 3)
-                .collect(Collectors.toList());
+                    .filter(p -> Math.abs(p.getGolsMandante() - p.getGolsVisitante()) >= 3)
+                    .collect(Collectors.toList());
             return new PageImpl<>(filtradas, pageable, filtradas.size());
         }
 
@@ -72,7 +83,7 @@ public class PartidaService {
 
     private Page<Partida> filtroBasico(Long clubeId, String estadio, Pageable pageable) {
         if (clubeId != null && estadio != null && !estadio.isEmpty()) {
-            return partidaRepository.findByMandanteIdOrVisitanteIdAndEstadioContainingIgnoreCase(clubeId, clubeId, estadio, pageable);
+            return partidaRepository.buscarPorClubeEEstadio(clubeId, estadio, pageable);
         } else if (clubeId != null) {
             return partidaRepository.findByMandanteIdOrVisitanteId(clubeId, clubeId, pageable);
         } else if (estadio != null && !estadio.isEmpty()) {
@@ -81,35 +92,7 @@ public class PartidaService {
             return partidaRepository.findAll(pageable);
         }
     }
-
-    private Partida converterParaPartida(PartidaDTO dto) {
-        Clube mandante = buscarClubePorId(dto.getMandanteId(), "Clube mandante não encontrado");
-        Clube visitante = buscarClubePorId(dto.getVisitanteId(), "Clube visitante não encontrado");
-
-        String[] gols = dto.getResultado().split("-");
-        if (gols.length != 2) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Resultado inválido. Formato esperado: 'X-Y'");
-        }
-
-        int golsMandante, golsVisitante;
-        try {
-            golsMandante = Integer.parseInt(gols[0]);
-            golsVisitante = Integer.parseInt(gols[1]);
-        } catch (NumberFormatException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Resultado deve conter números válidos");
-        }
-
-        return new Partida(mandante, visitante, golsMandante, golsVisitante, dto.getEstadio(), dto.getDataHora());
-    }
-
-    private void atualizarPartida(Partida partida, PartidaDTO dto) {
-        String[] gols = dto.getResultado().split("-");
-        partida.setGolsMandante(Integer.parseInt(gols[0]));
-        partida.setGolsVisitante(Integer.parseInt(gols[1]));
-        partida.setResultado(dto.getResultado());
-        partida.setEstadio(dto.getEstadio());
-        partida.setDataHora(dto.getDataHora());
-    }
+    
 
     private void validar(Partida partida, Long id) {
         validarClubesDiferentes(partida);
@@ -127,19 +110,8 @@ public class PartidaService {
     }
 
     private void validarResultado(Partida partida) {
-        String[] gols = partida.getResultado().split("-");
-        if (gols.length != 2) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Formato de resultado inválido. Use 'X-Y'");
-        }
-
-        try {
-            int g1 = Integer.parseInt(gols[0]);
-            int g2 = Integer.parseInt(gols[1]);
-            if (g1 < 0 || g2 < 0) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Número de gols não pode ser negativo");
-            }
-        } catch (NumberFormatException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Gols devem ser números inteiros válidos");
+        if (partida.getGolsMandante() < 0 || partida.getGolsVisitante() < 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Número de gols não pode ser negativo");
         }
     }
 
@@ -147,8 +119,9 @@ public class PartidaService {
         if (partida.getDataHora().isAfter(LocalDateTime.now())) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Data e hora não podem estar no futuro");
         }
+
         if (partida.getDataHora().isBefore(partida.getMandante().getDataCriacao().atStartOfDay()) ||
-            partida.getDataHora().isBefore(partida.getVisitante().getDataCriacao().atStartOfDay())) {
+                partida.getDataHora().isBefore(partida.getVisitante().getDataCriacao().atStartOfDay())) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Data da partida é anterior à criação de um dos clubes");
         }
     }
@@ -162,7 +135,8 @@ public class PartidaService {
     private void validarConflitosHorario(Partida partida, Long id) {
         LocalDateTime inicio = partida.getDataHora().minusHours(48);
         LocalDateTime fim = partida.getDataHora().plusHours(48);
-        List<Partida> proximas = partidaRepository.findByMandanteOrVisitanteAndDataHoraBetween(
+
+        List<Partida> proximas = partidaRepository.findConflitosDeHorario(
                 partida.getMandante(), partida.getVisitante(), inicio, fim);
 
         if (id != null) {
@@ -177,8 +151,8 @@ public class PartidaService {
     private void validarDisponibilidadeEstadio(Partida partida, Long id) {
         boolean conflito = partidaRepository.findAll().stream()
                 .anyMatch(p -> p.getEstadio().equals(partida.getEstadio()) &&
-                               p.getDataHora().equals(partida.getDataHora()) &&
-                               (id == null || !p.getId().equals(id)));
+                        p.getDataHora().equals(partida.getDataHora()) &&
+                        (id == null || !p.getId().equals(id)));
 
         if (conflito) {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Estádio já ocupado neste horário");
@@ -256,7 +230,7 @@ public class PartidaService {
                     .collect(Collectors.toList());
         }
 
-        Map<Clube, RetroDTO> ranking = new HashMap<>();
+        Map<Long, RetroDTO> ranking = new HashMap<>();
 
         for (Partida p : partidas) {
             if (tipo == null || tipo.equalsIgnoreCase("mandante")) {
@@ -270,23 +244,28 @@ public class PartidaService {
         return ranking.entrySet().stream()
                 .map(entry -> {
                     Map<String, Object> map = new HashMap<>();
-                    map.put("clube", entry.getKey().getNome());
-                    map.put("jogos", entry.getValue().getTotalJogos());
-                    map.put("vitorias", entry.getValue().getVitorias());
-                    map.put("gols", entry.getValue().getGolsFeitos());
-                    map.put("pontos", entry.getValue().getPontos());
+                    RetroDTO retro = entry.getValue();
+                    map.put("clubeId", entry.getKey());
+                    map.put("clube", retro.getNome());
+                    map.put("jogos", retro.getTotalJogos());
+                    map.put("vitorias", retro.getVitorias());
+                    map.put("gols", retro.getGolsFeitos());
+                    map.put("pontos", retro.getPontos());
+                    map.put("saldoGols", retro.getSaldoGols());
                     return map;
                 })
                 .filter(m -> switch (criterio.toLowerCase()) {
-                    case "jogos", "vitorias", "gols", "pontos" -> (int) m.get(criterio.toLowerCase()) > 0;
+                    case "jogos", "vitorias", "gols", "pontos", "saldoGols" -> (int) m.get(criterio.toLowerCase()) > 0;
                     default -> false;
                 })
                 .sorted(Comparator.comparingInt(m -> -((int) m.get(criterio.toLowerCase()))))
                 .collect(Collectors.toList());
     }
 
-    private void atualizarRanking(Map<Clube, RetroDTO> ranking, Clube clube, int golsFeitos, int golsSofridos) {
-        RetroDTO retro = ranking.getOrDefault(clube, new RetroDTO(clube.getNome(), 0, 0, 0, 0, 0));
+    private void atualizarRanking(Map<Long, RetroDTO> ranking, Clube clube, int golsFeitos, int golsSofridos) {
+        Long id = clube.getId();
+        RetroDTO retro = ranking.getOrDefault(id, new RetroDTO(clube.getNome(), 0, 0, 0, 0, 0));
+
         retro.setGolsFeitos(retro.getGolsFeitos() + golsFeitos);
         retro.setGolsSofridos(retro.getGolsSofridos() + golsSofridos);
 
@@ -298,6 +277,6 @@ public class PartidaService {
             retro.setEmpates(retro.getEmpates() + 1);
         }
 
-        ranking.put(clube, retro);
+        ranking.put(id, retro);
     }
-}
+} 
