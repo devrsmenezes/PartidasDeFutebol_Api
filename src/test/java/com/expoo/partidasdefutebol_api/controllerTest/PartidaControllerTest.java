@@ -168,6 +168,19 @@ class PartidaControllerTest {
     }
 
     @Test
+    void deveRetornarConfrontoDiretoComSucesso() throws Exception {
+    Map<String, Object> resultado = Map.of("totalPartidas", 3, "vitoriasClube1", 2);
+        when(partidaService.getConfrontoDireto(1L, 2L)).thenReturn(resultado);
+
+        mockMvc.perform(get("/partidas/confronto-direto")
+               .param("clube1Id", "1")
+               .param("clube2Id", "2"))
+               .andExpect(status().isOk())
+               .andExpect(jsonPath("$.totalPartidas").value(3));
+    }
+
+
+    @Test
     void deveRetornarErroSeCriterioInvalidoNoRanking() throws Exception {
         when(partidaService.getRanking(anyString(), any(), anyString()))
                 .thenReturn(Collections.emptyList());
