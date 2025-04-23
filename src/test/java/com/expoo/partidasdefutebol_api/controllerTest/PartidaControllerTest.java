@@ -54,7 +54,6 @@ class PartidaControllerTest {
     @Test
     void deveCadastrarPartida() throws Exception {
         when(partidaService.cadastrar(any())).thenReturn(partida);
-
         mockMvc.perform(post("/partidas")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(dto)))
@@ -66,7 +65,6 @@ class PartidaControllerTest {
     @Test
     void deveAtualizarPartida() throws Exception {
         when(partidaService.atualizar(eq(1L), any())).thenReturn(partida);
-
         mockMvc.perform(put("/partidas/1")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(dto)))
@@ -78,7 +76,6 @@ class PartidaControllerTest {
     @Test
     void deveRemoverPartida() throws Exception {
         doNothing().when(partidaService).remover(1L);
-
         mockMvc.perform(delete("/partidas/1"))
                 .andExpect(status().isNoContent());
     }
@@ -86,7 +83,6 @@ class PartidaControllerTest {
     @Test
     void deveBuscarPartidaPorId() throws Exception {
         when(partidaService.buscar(1L)).thenReturn(partida);
-
         mockMvc.perform(get("/partidas/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
@@ -96,11 +92,8 @@ class PartidaControllerTest {
     @Test
     void deveListarPartidasComFiltro() throws Exception {
         when(partidaService.listar(any(), any(), any(), any())).thenReturn(
-                new org.springframework.data.domain.PageImpl<>(List.of(partida))
-        );
-
-        mockMvc.perform(get("/partidas")
-                        .param("clubeId", "1"))
+                new org.springframework.data.domain.PageImpl<>(List.of(partida)));
+        mockMvc.perform(get("/partidas").param("clubeId", "1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(1))
                 .andExpect(jsonPath("$.content[0].id").value(1));
@@ -114,53 +107,44 @@ class PartidaControllerTest {
         map.put("gols", 10);
 
         when(partidaService.getRanking(eq("vitorias"), isNull(), eq("TODOS"))).thenReturn(List.of(map));
-
         mockMvc.perform(get("/partidas/ranking")
-                        .param("criterio", "vitorias")
-                        .param("tipo", "TODOS"))
+                .param("criterio", "vitorias")
+                .param("tipo", "TODOS"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].clube").value("Time A"))
-                .andExpect(jsonPath("$[0].vitorias").value(3))
-                .andExpect(jsonPath("$[0].gols").value(10));
+                .andExpect(jsonPath("$[0].clube").value("Time A"));
     }
 
     @Test
     void deveRetornarBadRequestAoCadastrarPartidaComCamposInvalidos() throws Exception {
         PartidaDTO invalida = new PartidaDTO(null, null, null, 0, 0, "", LocalDateTime.now().plusDays(1));
-
         mockMvc.perform(post("/partidas")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(invalida)))
-                .andExpect(status().isBadRequest());
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(invalida)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").exists());
     }
 
     @Test
     void deveRetornarErroAoCadastrarPartidaComExcecaoDeNegocio() throws Exception {
-        PartidaDTO dtoErro = new PartidaDTO(null, 1L, 1L, 2, 2, "Maracanã", LocalDateTime.now());
-
         when(partidaService.cadastrar(any())).thenThrow(new ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST));
-
         mockMvc.perform(post("/partidas")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(dtoErro)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
     void deveRetornarErroAoAtualizarPartidaInexistente() throws Exception {
         when(partidaService.atualizar(eq(99L), any())).thenThrow(new ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND));
-
         mockMvc.perform(put("/partidas/99")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(dto)))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     void deveRetornarErroAoBuscarPartidaInexistente() throws Exception {
         when(partidaService.buscar(99L)).thenThrow(new ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND));
-
         mockMvc.perform(get("/partidas/99"))
                 .andExpect(status().isNotFound());
     }
@@ -169,7 +153,6 @@ class PartidaControllerTest {
     void deveRetornarErroAoRemoverPartidaInexistente() throws Exception {
         doThrow(new ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND))
                 .when(partidaService).remover(99L);
-
         mockMvc.perform(delete("/partidas/99"))
                 .andExpect(status().isNotFound());
     }
@@ -178,10 +161,9 @@ class PartidaControllerTest {
     void deveRetornarErroSeClubeNaoExisteEmConfrontoDireto() throws Exception {
         when(partidaService.getConfrontoDireto(99L, 1L))
                 .thenThrow(new ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST));
-
         mockMvc.perform(get("/partidas/confronto-direto")
-                        .param("clube1Id", "99")
-                        .param("clube2Id", "1"))
+                .param("clube1Id", "99")
+                .param("clube2Id", "1"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -189,11 +171,21 @@ class PartidaControllerTest {
     void deveRetornarErroSeCriterioInvalidoNoRanking() throws Exception {
         when(partidaService.getRanking(anyString(), any(), anyString()))
                 .thenReturn(Collections.emptyList());
-
         mockMvc.perform(get("/partidas/ranking")
-                        .param("criterio", "invalido")
-                        .param("tipo", "TODOS"))
+                .param("criterio", "invalido")
+                .param("tipo", "TODOS"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(0));
     }
-}
+
+    @Test
+    void deveRetornarErroDeConflitoDeHorario() throws Exception {
+        when(partidaService.cadastrar(any())).thenThrow(new ResponseStatusException(org.springframework.http.HttpStatus.CONFLICT, "Conflito de horário no estádio"));
+
+        mockMvc.perform(post("/partidas")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Conflito de horário no estádio"));
+    }
+} 

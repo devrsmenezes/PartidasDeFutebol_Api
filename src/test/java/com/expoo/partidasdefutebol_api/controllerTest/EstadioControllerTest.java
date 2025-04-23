@@ -61,6 +61,20 @@ public class EstadioControllerTest {
     }
 
     @Test
+    @DisplayName("POST /estadio - Deve retornar 409 se nome já existir")
+    void deveRetornar409QuandoNomeDuplicado() throws Exception {
+        EstadioDTO dto = new EstadioDTO(null, "Maracanã");
+
+        Mockito.when(estadioService.cadastrar(any()))
+            .thenThrow(new ResponseStatusException(HttpStatus.CONFLICT, "Estádio já existe"));
+
+        mockMvc.perform(post("/estadio")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
+            .andExpect(status().isConflict());
+    }
+
+    @Test
     @DisplayName("GET /estadio/{id} - Deve retornar estádio existente")
     void deveBuscarEstadioPorId() throws Exception {
         EstadioDTO dto = new EstadioDTO(1L, "Arena Neo Química");
@@ -155,5 +169,19 @@ public class EstadioControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(dto)))
             .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("PUT /estadio/{id} - Deve retornar 409 se nome já existir")
+    void deveRetornar409AoAtualizarParaNomeExistente() throws Exception {
+        EstadioDTO dto = new EstadioDTO(null, "Nome Existente");
+
+        Mockito.when(estadioService.editar(eq(1L), any()))
+            .thenThrow(new ResponseStatusException(HttpStatus.CONFLICT, "Estádio já existe"));
+
+        mockMvc.perform(put("/estadio/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(dto)))
+            .andExpect(status().isConflict());
     }
 }
