@@ -92,7 +92,6 @@ public class PartidaService {
             return partidaRepository.findAll(pageable);
         }
     }
-    
 
     private void validar(Partida partida, Long id) {
         validarClubesDiferentes(partida);
