@@ -15,10 +15,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -50,10 +51,8 @@ class PartidaServiceTest {
 
     @Test
     void deveCadastrarPartidaComSucesso() {
-        when(clubeRepository.findById(anyLong())).thenAnswer(invocation -> {
-            Long id = invocation.getArgument(0);
-            return id.equals(1L) ? Optional.of(mandante) : Optional.of(visitante);
-        });
+        when(clubeRepository.findById(1L)).thenReturn(Optional.of(mandante));
+        when(clubeRepository.findById(2L)).thenReturn(Optional.of(visitante));
         when(partidaRepository.save(any())).thenReturn(partida);
 
         PartidaDTO dto = new PartidaDTO(null, 1L, 2L, 2, 1, "Maracanã", LocalDateTime.now().minusDays(1));
@@ -71,7 +70,6 @@ class PartidaServiceTest {
         PartidaDTO dto = new PartidaDTO(null, 1L, 2L, 3, 2, "Maracanã", LocalDateTime.now().minusDays(1));
         Partida atualizada = partidaService.atualizar(1L, dto);
 
-        assertNotNull(atualizada);
         assertEquals(3, atualizada.getGolsMandante());
     }
 
@@ -84,7 +82,7 @@ class PartidaServiceTest {
     }
 
     @Test
-    void deveBuscarPartidaPorIdComSucesso() {
+    void deveBuscarPartidaComSucesso() {
         when(partidaRepository.findById(1L)).thenReturn(Optional.of(partida));
 
         Partida encontrada = partidaService.buscar(1L);
@@ -94,25 +92,100 @@ class PartidaServiceTest {
     @Test
     void deveListarPartidasSemFiltros() {
         Pageable pageable = PageRequest.of(0, 10);
-    
-        when(partidaRepository.findAll(any(Pageable.class))).thenReturn(new PageImpl<>(List.of(partida)));
-    
+        when(partidaRepository.findAll(pageable)).thenReturn(new PageImpl<>(List.of(partida)));
+
         var pagina = partidaService.listar(null, null, null, pageable);
-    
+
         assertEquals(1, pagina.getContent().size());
     }
-    
+
     @Test
     void deveListarPartidasComGoleadas() {
         partida.setGolsMandante(5);
         partida.setGolsVisitante(1);
         Pageable pageable = PageRequest.of(0, 10);
-    
-        when(partidaRepository.findAll(any(Pageable.class))).thenReturn(new PageImpl<>(List.of(partida)));
-    
+        when(partidaRepository.findAll(pageable)).thenReturn(new PageImpl<>(List.of(partida)));
+
         var pagina = partidaService.listar(null, null, true, pageable);
-    
+
         assertEquals(1, pagina.getContent().size());
     }
-    
+
+    @Test
+    void deveLancarErroQuandoClubesSaoIguais() {
+        when(clubeRepository.findById(anyLong())).thenReturn(Optional.of(mandante));
+
+        PartidaDTO dto = new PartidaDTO(null, 1L, 1L, 2, 1, "Maracanã", LocalDateTime.now().minusDays(1));
+
+        assertThrows(ResponseStatusException.class, () -> partidaService.cadastrar(dto));
+    }
+
+    @Test
+    void deveLancarErroQuandoGolsNegativos() {
+        when(clubeRepository.findById(1L)).thenReturn(Optional.of(mandante));
+        when(clubeRepository.findById(2L)).thenReturn(Optional.of(visitante));
+
+        PartidaDTO dto = new PartidaDTO(null, 1L, 2L, -1, 2, "Maracanã", LocalDateTime.now().minusDays(1));
+
+        assertThrows(ResponseStatusException.class, () -> partidaService.cadastrar(dto));
+    }
+
+    @Test
+    void deveLancarErroQuandoDataHoraNoFuturo() {
+        when(clubeRepository.findById(1L)).thenReturn(Optional.of(mandante));
+        when(clubeRepository.findById(2L)).thenReturn(Optional.of(visitante));
+
+        PartidaDTO dto = new PartidaDTO(null, 1L, 2L, 2, 1, "Maracanã", LocalDateTime.now().plusDays(1));
+
+        assertThrows(ResponseStatusException.class, () -> partidaService.cadastrar(dto));
+    }
+
+    @Test
+    void deveLancarErroQuandoClubeMandanteInativo() {
+        mandante.setAtivo(false);
+        when(clubeRepository.findById(1L)).thenReturn(Optional.of(mandante));
+        when(clubeRepository.findById(2L)).thenReturn(Optional.of(visitante));
+
+        PartidaDTO dto = new PartidaDTO(null, 1L, 2L, 2, 1, "Maracanã", LocalDateTime.now().minusDays(1));
+
+        assertThrows(ResponseStatusException.class, () -> partidaService.cadastrar(dto));
+    }
+
+    @Test
+    void deveLancarErroQuandoConflitoDeHorario() {
+        when(clubeRepository.findById(1L)).thenReturn(Optional.of(mandante));
+        when(clubeRepository.findById(2L)).thenReturn(Optional.of(visitante));
+        when(partidaRepository.findConflitosDeHorario(any(), any(), any(), any())).thenReturn(List.of(partida));
+
+        PartidaDTO dto = new PartidaDTO(null, 1L, 2L, 2, 1, "Maracanã", LocalDateTime.now().minusDays(1));
+
+        assertThrows(ResponseStatusException.class, () -> partidaService.cadastrar(dto));
+    }
+
+    @Test
+    void deveLancarErroQuandoEstadioOcupado() {
+        when(clubeRepository.findById(1L)).thenReturn(Optional.of(mandante));
+        when(clubeRepository.findById(2L)).thenReturn(Optional.of(visitante));
+        when(partidaRepository.findAll()).thenReturn(List.of(partida));
+
+        PartidaDTO dto = new PartidaDTO(null, 1L, 2L, 2, 1, "Maracanã", partida.getDataHora());
+
+        assertThrows(ResponseStatusException.class, () -> partidaService.cadastrar(dto));
+    }
+
+    @Test
+    void deveLancarErroQuandoBuscarPartidaInexistente() {
+        when(partidaRepository.findById(anyLong())).thenReturn(Optional.empty());
+
+        assertThrows(ResponseStatusException.class, () -> partidaService.buscar(99L));
+    }
+
+    @Test
+    void deveLancarErroQuandoCadastrarComClubeInexistente() {
+        when(clubeRepository.findById(anyLong())).thenReturn(Optional.empty());
+
+        PartidaDTO dto = new PartidaDTO(null, 1L, 2L, 2, 1, "Maracanã", LocalDateTime.now().minusDays(1));
+
+        assertThrows(ResponseStatusException.class, () -> partidaService.cadastrar(dto));
+    }
 }
