@@ -34,14 +34,20 @@ public class PartidaService {
     public Partida cadastrar(PartidaDTO dto) {
         Clube mandante = buscarClubePorId(dto.getMandanteId(), "Clube mandante não encontrado");
         Clube visitante = buscarClubePorId(dto.getVisitanteId(), "Clube visitante não encontrado");
-
+    
         Partida partida = new Partida(null, mandante, visitante, dto.getGolsMandante(), dto.getGolsVisitante(), dto.getDataHora());
         partida.setEstadio(dto.getEstadio());
-        partida.setResultado(dto.getResultado());
-
+    
+        try {
+            partida.setResultado(dto.getResultado());
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        }
+    
         validar(partida, null);
         return partidaRepository.save(partida);
     }
+    
 
     @Transactional
     public Partida atualizar(Long id, PartidaDTO dto) {
