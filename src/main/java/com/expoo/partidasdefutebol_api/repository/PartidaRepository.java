@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -24,9 +25,10 @@ public interface PartidaRepository extends JpaRepository<Partida, Long> {
           AND LOWER(p.estadio) LIKE LOWER(CONCAT('%', :estadio, '%'))
     """)
     Page<Partida> buscarPorClubeEEstadio(
-            @Param("clubeId") Long clubeId,
-            @Param("estadio") String estadio,
-            Pageable pageable);
+        @Param("clubeId") Long clubeId,
+        @Param("estadio") String estadio,
+        Pageable pageable
+    );
 
     List<Partida> findByMandanteIdOrVisitanteId(Long clubeId1, Long clubeId2);
 
@@ -44,8 +46,8 @@ public interface PartidaRepository extends JpaRepository<Partida, Long> {
            OR (p.mandante.id = :clube2 AND p.visitante.id = :clube1)
     """)
     List<Partida> findConfrontosDiretos(
-            @Param("clube1") Long clube1,
-            @Param("clube2") Long clube2
+        @Param("clube1") Long clube1,
+        @Param("clube2") Long clube2
     );
 
     @Query("""
@@ -54,9 +56,22 @@ public interface PartidaRepository extends JpaRepository<Partida, Long> {
           AND p.dataHora BETWEEN :inicio AND :fim
     """)
     List<Partida> findConflitosDeHorario(
-            @Param("clube1") Clube clube1,
-            @Param("clube2") Clube clube2,
-            @Param("inicio") LocalDateTime inicio,
-            @Param("fim") LocalDateTime fim
+        @Param("clube1") Clube clube1,
+        @Param("clube2") Clube clube2,
+        @Param("inicio") LocalDateTime inicio,
+        @Param("fim") LocalDateTime fim
     );
+
+    @Query("""
+        SELECT COALESCE(SUM(
+            CASE 
+                WHEN p.mandante.id = :clubeId THEN p.golsMandante 
+                WHEN p.visitante.id = :clubeId THEN p.golsVisitante 
+                ELSE 0 
+            END
+        ), 0)
+        FROM Partida p
+        WHERE p.mandante.id = :clubeId OR p.visitante.id = :clubeId
+    """)
+    Integer somarGolsDoClube(@Param("clubeId") Long clubeId);
 }
