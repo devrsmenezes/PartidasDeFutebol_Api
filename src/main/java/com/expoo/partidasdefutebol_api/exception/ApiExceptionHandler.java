@@ -1,5 +1,7 @@
 package com.expoo.partidasdefutebol_api.exception;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -14,6 +16,8 @@ import java.util.Map;
 
 @ControllerAdvice
 public class ApiExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(ApiExceptionHandler.class);
 
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<Object> handleResponseStatusException(ResponseStatusException ex, WebRequest request) {
@@ -34,7 +38,6 @@ public class ApiExceptionHandler {
             .orElse("Dados inválidos");
 
         body.put("message", message);
-
         return new ResponseEntity<>(body, HttpStatus.BAD_REQUEST);
     }
 
@@ -45,7 +48,8 @@ public class ApiExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<Object> handleAllUncaught(Exception ex, WebRequest request) {
-        return buildResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR, "Erro interno inesperado");
+        log.error("Erro interno inesperado: {}", ex.getMessage(), ex);
+        return buildResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR, "Erro interno ao processar a requisição.");
     }
 
     private ResponseEntity<Object> buildResponseEntity(HttpStatus status, String message) {

@@ -11,8 +11,11 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
@@ -153,5 +156,40 @@ class PartidaRepositoryTest {
         );
 
         assertEquals(1, conflitos.size());
+    }
+
+
+    @Test
+    @DisplayName("Deve somar gols corretamente para clube com partidas")
+    void deveSomarGolsDoClubeComPartidas() {
+        Clube mandante = new Clube("NeoClube", "SP", LocalDate.of(2000, 1, 1), true);
+        Clube visitante = new Clube("VisitanteFC", "RJ", LocalDate.of(2000, 1, 1), true);
+
+        mandante = clubeRepository.save(mandante);
+        visitante = clubeRepository.save(visitante);
+
+        Partida partida1 = new Partida(null, mandante, visitante, 2, 1, LocalDateTime.now());
+        partida1.setEstadio("Neo Arena");
+
+        Partida partida2 = new Partida(null, visitante, mandante, 0, 3, LocalDateTime.now());
+        partida2.setEstadio("Neo Arena");
+
+        partidaRepository.save(partida1);
+        partidaRepository.save(partida2);
+
+        Integer totalGols = partidaRepository.somarGolsDoClube(mandante.getId());
+
+        assertEquals(5, totalGols); 
+    }
+
+    @Test
+    @DisplayName("Deve retornar 0 para clube sem partidas")
+    void deveRetornarZeroQuandoClubeNaoTemPartidas() {
+        Clube clube = new Clube("SemPartidasFC", "MG", LocalDate.of(2010, 5, 10), true);
+        clube = clubeRepository.save(clube);
+
+        Integer total = partidaRepository.somarGolsDoClube(clube.getId());
+
+        assertThat(total).isEqualTo(0);
     }
 }
